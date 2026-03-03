@@ -33,6 +33,8 @@ export default function Home() {
 
   return (
     <main style={{ padding: 16, maxWidth: 520 }}>
+      <div className="bg-red-500 text-white p-4">テスト</div>
+
       <h1>DeepData（試作）入力</h1>
       <p style={{ marginTop: 4 }}>（匿名・ログイン不要）</p>
 
