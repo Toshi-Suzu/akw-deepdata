@@ -80,7 +80,7 @@ export default function Home() {
             <Select
               value={form.motive}
               onChange={(v) => setForm({ ...form, motive: v })}
-              options={["学習","デート","子ども","展示（海獣）","展示（サンゴ）","企画展"]}
+              options={["学習","デート","子ども","展示（サンゴ）","企画展"]}
             />
           </Field>
 
