@@ -52,7 +52,9 @@ export default function Home() {
   const [msg, setMsg] = useState<string | null>(null);
   const [isError, setIsError] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+
   const [alreadyAnswered, setAlreadyAnswered] = useState(false);
+  const [editMode, setEditMode] = useState(false); // ★追加：修正モード
 
   useEffect(() => {
     const saved = localStorage.getItem("akw_answered_visit_key");
@@ -129,9 +131,12 @@ export default function Home() {
         setMsg(data.error ?? "送信に失敗しました");
       } else {
         setIsError(false);
-        setMsg("送信しました（ご協力ありがとうございました）");
+        // ★修正モードかどうかで文言だけ変える（DBはupsertなのでどちらもOK）
+        setMsg(editMode ? "修正内容を保存しました（上書きOK）" : "送信しました（ご協力ありがとうございました）");
+
         localStorage.setItem("akw_answered_visit_key", getVisitKeyJST());
         setAlreadyAnswered(true);
+        setEditMode(false); // ★送信後は修正モード解除
       }
     } catch {
       setIsError(true);
@@ -173,6 +178,18 @@ export default function Home() {
               />
             </div>
           </div>
+
+          {/* ★追加：本日回答済みバッジ */}
+          {alreadyAnswered && !editMode && (
+            <div className="mt-3 rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-xs font-bold text-amber-800">
+              本日は回答済みです（誤入力があれば「回答を修正する」から上書きできます）
+            </div>
+          )}
+          {editMode && (
+            <div className="mt-3 rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-bold text-slate-700">
+              修正モード：この送信は本日の回答を上書きします
+            </div>
+          )}
         </header>
 
         <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
@@ -230,10 +247,15 @@ export default function Home() {
               <button
                 type="button"
                 onClick={submit}
-                disabled={!canGoNext || isSubmitting || alreadyAnswered}
+                // ★変更：回答済みでもeditModeなら送れる
+                disabled={!canGoNext || isSubmitting || (alreadyAnswered && !editMode)}
                 className="ml-auto rounded-xl bg-slate-900 px-5 py-3 text-sm font-extrabold text-white shadow-sm transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:bg-slate-400"
               >
-                {alreadyAnswered ? "本日は回答済み" : isSubmitting ? "送信中..." : "送信"}
+                {alreadyAnswered && !editMode
+                  ? "本日は回答済み"
+                  : isSubmitting
+                    ? "送信中..."
+                    : "送信"}
               </button>
             )}
           </div>
@@ -248,6 +270,42 @@ export default function Home() {
               ].join(" ")}
             >
               {msg}
+            </div>
+          )}
+
+          {/* ★追加：修正ボタン（回答済みのときだけ表示） */}
+          {alreadyAnswered && !editMode && (
+            <div className="mt-4 flex flex-wrap items-center gap-3">
+              <button
+                type="button"
+                onClick={() => {
+                  setEditMode(true);
+                  setMsg(null);
+                  setIsError(false);
+                }}
+                className="rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-bold text-slate-700 hover:bg-slate-50"
+              >
+                回答を修正する
+              </button>
+              <p className="text-xs text-slate-500">
+                ※同じ日なら上書き保存されます（誤入力の修正用）
+              </p>
+            </div>
+          )}
+
+          {/* ★追加：修正モード解除 */}
+          {editMode && (
+            <div className="mt-4 flex flex-wrap items-center gap-3">
+              <button
+                type="button"
+                onClick={() => setEditMode(false)}
+                className="rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-bold text-slate-700 hover:bg-slate-50"
+              >
+                修正をやめる
+              </button>
+              <p className="text-xs text-slate-500">
+                ※送信しなければ上書きされません
+              </p>
             </div>
           )}
 
