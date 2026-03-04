@@ -1,24 +1,6 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
-
-type GroupKey =
-  | "residence"
-  | "companion_type"
-  | "visit_frequency"
-  | "trigger"
-  | "info_source"
-  | "top_interest"
-  | "child_age_band";
-
-const GROUP_KEYS: GroupKey[] = [
-  "residence",
-  "companion_type",
-  "visit_frequency",
-  "trigger",
-  "info_source",
-  "top_interest",
-  "child_age_band",
-];
+import { GROUP_KEYS, type GroupKey } from "@/app/questions";
 
 function countBy(rows: any[], key: GroupKey): { label: string; count: number }[] {
   const m = new Map<string, number>();
@@ -39,7 +21,6 @@ export async function GET(req: Request) {
     const date_from = url.searchParams.get("date_from") || "";
     const date_to = url.searchParams.get("date_to") || "";
 
-    // （簡易）管理用トークン。必要ならVercel envにADMIN_TOKENを入れて使う
     const token = url.searchParams.get("token") || "";
     if (process.env.ADMIN_TOKEN && token !== process.env.ADMIN_TOKEN) {
       return NextResponse.json({ error: "unauthorized" }, { status: 401 });
@@ -50,8 +31,6 @@ export async function GET(req: Request) {
       process.env.SUPABASE_SERVICE_ROLE_KEY!
     );
 
-    // 必要な列だけ取得（軽量化）
-    // created_atで期間絞り、age_band/genderでセグメント絞り
     let q = supabase
       .from("responses")
       .select(
@@ -64,11 +43,10 @@ export async function GET(req: Request) {
     if (gender) q = q.eq("gender", gender);
 
     const { data, error } = await q;
-    if (error) {
-      return NextResponse.json({ error: error.message }, { status: 500 });
-    }
+    if (error) return NextResponse.json({ error: error.message }, { status: 500 });
 
     const rows = data ?? [];
+
     const now = new Date();
     const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate()).toISOString();
     const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000).toISOString();

@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { GROUP_KEYS, GROUP_TITLES, type GroupKey } from "@/app/questions";
 
 type StatItem = { label: string; count: number };
 type StatsResponse = {
@@ -248,13 +249,9 @@ export default function Admin() {
         </section>
 
         <div className="grid gap-4 md:grid-cols-2">
-          <BarList title="居住地（residence）" items={groups.residence ?? []} />
-          <BarList title="同伴（companion_type）" items={groups.companion_type ?? []} />
-          <BarList title="来館頻度（visit_frequency）" items={groups.visit_frequency ?? []} />
-          <BarList title="きっかけ（trigger）" items={groups.trigger ?? []} />
-          <BarList title="情報源（info_source）" items={groups.info_source ?? []} />
-          <BarList title="見たかった展示（top_interest）" items={groups.top_interest ?? []} />
-          <BarList title="子どもの年齢（child_age_band）" items={groups.child_age_band ?? []} />
+          {GROUP_KEYS.map((k) => (
+            <BarList key={k} title={GROUP_TITLES[k]} items={(groups as any)[k] ?? []} />
+          ))}
         </div>
 
         <p className="text-xs text-slate-500">

@@ -1,26 +1,6 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
-
-const allowed = {
-  age_band: ["10代", "20代", "30代", "40代", "50代", "60代+"] as const,
-  gender: ["女性", "男性", "回答しない"] as const,
-  residence: ["名古屋市", "愛知県（名古屋以外）", "東海地方", "関東", "関西", "その他", "海外"] as const,
-  companion_type: ["小学生以下の子どもと", "中高生の子どもと", "夫婦/カップル", "友人", "1人", "団体"] as const,
-  visit_frequency: ["初めて", "数年ぶり", "1〜2年に1回", "ほぼ毎年", "年2回以上"] as const,
-  trigger: [
-    "子どもが行きたいと言った",
-    "以前から来たかった",
-    "SNSで見た",
-    "テレビ・メディア",
-    "旅行",
-    "学校・学習",
-    "イベント",
-    "友人・知人の紹介",
-  ] as const,
-  info_source: ["SNS", "YouTube", "テレビ", "旅行サイト", "学校", "家族・友人", "特にない"] as const,
-  top_interest: ["シャチ", "イルカ", "ペンギン", "ウミガメ", "サンゴ水槽", "深海", "特にない"] as const,
-  child_age_band: ["0〜3歳", "4〜6歳", "小学生"] as const,
-};
+import { ALLOWED as allowed } from "@/app/questions"; // ★追加：共通定義を読む
 
 function isAllowed<T extends readonly string[]>(arr: T, v: any): v is T[number] {
   return typeof v === "string" && (arr as readonly string[]).includes(v);
@@ -85,10 +65,9 @@ export async function POST(req: Request) {
       process.env.SUPABASE_SERVICE_ROLE_KEY!
     );
 
-    // ✅ ここがポイント：insert → upsert（同一キーは更新）
+    // ✅ insert → upsert（同一キーは更新）
     const row = {
       staff_email: null,
-
       respondent_id: body.respondent_id,
       visit_key: body.visit_key,
 
@@ -111,7 +90,6 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: error.message }, { status: 500 });
     }
 
-    // upsertは「新規作成」か「更新」かをここでは区別しない（UX的にはOK）
     return NextResponse.json({ ok: true });
   } catch {
     return NextResponse.json({ error: "bad request" }, { status: 400 });
