@@ -370,9 +370,23 @@ function getVisitKeyJST() {
             )}
           </div>
           {alreadyAnswered && (
-            <p className="mt-3 text-xs font-semibold text-slate-500">
-              ※同一端末では1日1回まで回答できます
-            </p>
+            <>
+              <p className="mt-3 text-xs font-semibold text-slate-500">
+                ※同一端末では1日1回まで回答できます
+              </p>
+
+              <button
+                type="button"
+                onClick={() => {
+                  localStorage.removeItem("akw_answered_visit_key");
+                  setAlreadyAnswered(false);
+                  setMsg(null);
+                }}
+                className="mt-2 text-xs font-semibold text-blue-600 underline"
+              >
+                回答を修正する
+              </button>
+            </>
           )}
           {msg && (
             <div
