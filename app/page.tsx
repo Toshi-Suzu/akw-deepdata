@@ -1,135 +1,351 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 
 type FormState = {
   age_band: string;
   gender: string;
+  residence: string;
   companion_type: string;
-  motive: string;
+  visit_frequency: string;
+  trigger: string;
+  info_source: string;
+  top_interest: string;
+
+  // 条件分岐（30代女性×親子のみ）
+  child_age_band?: string;
 };
 
-export default function Home() {
-  const [msg, setMsg] = useState<string | null>(null);
-  const [loading, setLoading] = useState(false);
+type Option = { value: string; label: string };
 
+const OPTIONS = {
+  age_band: [
+    { value: "10代", label: "10代" },
+    { value: "20代", label: "20代" },
+    { value: "30代", label: "30代" },
+    { value: "40代", label: "40代" },
+    { value: "50代", label: "50代" },
+    { value: "60代+", label: "60代以上" },
+  ] satisfies Option[],
+  gender: [
+    { value: "女性", label: "女性" },
+    { value: "男性", label: "男性" },
+    { value: "回答しない", label: "回答しない" },
+  ] satisfies Option[],
+  residence: [
+    { value: "名古屋市", label: "名古屋市" },
+    { value: "愛知県（名古屋以外）", label: "愛知県（名古屋以外）" },
+    { value: "東海地方", label: "東海地方（岐阜・三重・静岡など）" },
+    { value: "関東", label: "関東" },
+    { value: "関西", label: "関西" },
+    { value: "その他", label: "その他" },
+    { value: "海外", label: "海外" },
+  ] satisfies Option[],
+  companion_type: [
+    { value: "小学生以下の子どもと", label: "小学生以下の子どもと" },
+    { value: "中高生の子どもと", label: "中高生の子どもと" },
+    { value: "夫婦/カップル", label: "夫婦/カップル" },
+    { value: "友人", label: "友人" },
+    { value: "1人", label: "1人" },
+    { value: "団体", label: "団体" },
+  ] satisfies Option[],
+  visit_frequency: [
+    { value: "初めて", label: "初めて" },
+    { value: "数年ぶり", label: "数年ぶり" },
+    { value: "1〜2年に1回", label: "1〜2年に1回" },
+    { value: "ほぼ毎年", label: "ほぼ毎年" },
+    { value: "年2回以上", label: "年2回以上" },
+  ] satisfies Option[],
+  trigger: [
+    { value: "子どもが行きたいと言った", label: "子どもが行きたいと言った" },
+    { value: "以前から来たかった", label: "以前から来たかった" },
+    { value: "SNSで見た", label: "SNSで見た" },
+    { value: "テレビ・メディア", label: "テレビ・メディア" },
+    { value: "旅行", label: "旅行" },
+    { value: "学校・学習", label: "学校・学習" },
+    { value: "イベント", label: "イベント" },
+    { value: "友人・知人の紹介", label: "友人・知人の紹介" },
+  ] satisfies Option[],
+  info_source: [
+    { value: "SNS", label: "SNS" },
+    { value: "YouTube", label: "YouTube" },
+    { value: "テレビ", label: "テレビ" },
+    { value: "旅行サイト", label: "旅行サイト" },
+    { value: "学校", label: "学校" },
+    { value: "家族・友人", label: "家族・友人" },
+    { value: "特にない", label: "特にない" },
+  ] satisfies Option[],
+  top_interest: [
+    { value: "シャチ", label: "シャチ" },
+    { value: "イルカ", label: "イルカ" },
+    { value: "ペンギン", label: "ペンギン" },
+    { value: "ウミガメ", label: "ウミガメ" },
+    { value: "サンゴ水槽", label: "サンゴ水槽" },
+    { value: "深海", label: "深海" },
+    { value: "特にない", label: "特にない" },
+  ] satisfies Option[],
+  child_age_band: [
+    { value: "0〜3歳", label: "0〜3歳" },
+    { value: "4〜6歳", label: "4〜6歳" },
+    { value: "小学生", label: "小学生" },
+  ] satisfies Option[],
+};
+
+type StepKey =
+  | "age_band"
+  | "gender"
+  | "residence"
+  | "companion_type"
+  | "visit_frequency"
+  | "trigger"
+  | "info_source"
+  | "top_interest"
+  | "child_age_band"; // 条件分岐
+
+type Step = {
+  key: StepKey;
+  title: string;
+  description?: string;
+  options: Option[];
+  required?: boolean;
+};
+
+const BASE_STEPS: Step[] = [
+  { key: "age_band", title: "年代", options: OPTIONS.age_band, required: true },
+  { key: "gender", title: "性別", options: OPTIONS.gender, required: true },
+  {
+    key: "residence",
+    title: "居住エリア",
+    description: "分析の精度が上がります（個人特定には使いません）",
+    options: OPTIONS.residence,
+    required: true,
+  },
+  { key: "companion_type", title: "同伴構成", options: OPTIONS.companion_type, required: true },
+  { key: "visit_frequency", title: "来館頻度", options: OPTIONS.visit_frequency, required: true },
+  { key: "trigger", title: "来館のきっかけ", options: OPTIONS.trigger, required: true },
+  { key: "info_source", title: "情報を知った場所", options: OPTIONS.info_source, required: true },
+  { key: "top_interest", title: "一番見たかった展示", options: OPTIONS.top_interest, required: true },
+];
+
+export default function Home() {
   const [form, setForm] = useState<FormState>({
-    age_band: "30代",
-    gender: "女性",
-    companion_type: "親子",
-    motive: "学習",
+    age_band: "",
+    gender: "",
+    residence: "",
+    companion_type: "",
+    visit_frequency: "",
+    trigger: "",
+    info_source: "",
+    top_interest: "",
+    child_age_band: "",
   });
 
-  async function submit() {
-    setLoading(true);
+  const [stepIndex, setStepIndex] = useState(0);
+  const [msg, setMsg] = useState<string | null>(null);
+  const [isError, setIsError] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const needsChildAgeStep =
+    form.age_band === "30代" &&
+    form.gender === "女性" &&
+    (form.companion_type === "小学生以下の子どもと" || form.companion_type === "中高生の子どもと");
+
+  const steps: Step[] = useMemo(() => {
+    const s = [...BASE_STEPS];
+    if (needsChildAgeStep) {
+      // 「親子」でより有効なのは子ども年齢（母親来館減少の構造が切れる）
+      // companion_type が中高生でも入れるかは運用次第だが、ここでは入れている
+      s.splice(4, 0, {
+        key: "child_age_band",
+        title: "（追加）お子さまの年齢",
+        description: "30代女性 × 親子の場合のみ表示されます",
+        options: OPTIONS.child_age_band,
+        required: true,
+      });
+    }
+    return s;
+  }, [needsChildAgeStep]);
+
+  const current = steps[stepIndex];
+
+  const currentValue = (form as any)[current.key] as string;
+  const progress = Math.round(((stepIndex + 1) / steps.length) * 100);
+
+  const canGoNext = useMemo(() => {
+    if (!current.required) return true;
+    return !!currentValue;
+  }, [current.required, currentValue]);
+
+  function setAnswer(stepKey: StepKey, value: string) {
+    setForm((prev) => ({ ...prev, [stepKey]: value }));
     setMsg(null);
-
-    const res = await fetch("/api/submit", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(form),
-    });
-
-    const data = await res.json().catch(() => ({}));
-    setLoading(false);
-
-    if (!res.ok) setMsg(data.error ?? "送信に失敗しました");
-    else setMsg("送信しました（保存OK）");
+    setIsError(false);
   }
 
-  return (
-    <main className="min-h-screen bg-slate-50 px-4 py-12">
-      <div className="mx-auto max-w-lg">
+  function next() {
+    if (!canGoNext) return;
+    setStepIndex((i) => Math.min(i + 1, steps.length - 1));
+  }
 
-        <header className="mb-6">
-          <h1 className="text-2xl font-extrabold text-slate-900">
-            DeepData 入力
-          </h1>
-          <p className="mt-2 text-sm text-slate-600">
-            名古屋港水族館 来館者ディープデータ収集（匿名）
+  function back() {
+    setStepIndex((i) => Math.max(i - 1, 0));
+    setMsg(null);
+    setIsError(false);
+  }
+
+  async function submit() {
+    setMsg(null);
+    setIsError(false);
+    setIsSubmitting(true);
+
+    // 条件分岐が無い場合は child_age_band を空のまま送る（DB側でnullable推奨）
+    const payload = { ...form };
+    if (!needsChildAgeStep) delete (payload as any).child_age_band;
+
+    try {
+      const res = await fetch("/api/submit", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        setIsError(true);
+        setMsg(data.error ?? "送信に失敗しました");
+      } else {
+        setIsError(false);
+        setMsg("送信しました（ご協力ありがとうございました）");
+      }
+    } catch {
+      setIsError(true);
+      setMsg("通信に失敗しました（ネットワークをご確認ください）");
+    } finally {
+      setIsSubmitting(false);
+    }
+  }
+
+  const isLast = stepIndex === steps.length - 1;
+
+  return (
+    <main className="min-h-screen bg-slate-50 px-4 py-10">
+      <div className="mx-auto w-full max-w-xl">
+        <header className="mb-5">
+          <div className="flex items-center gap-3">
+            <span className="rounded-full border border-indigo-200 bg-indigo-50 px-3 py-1 text-xs font-bold text-indigo-700">
+              匿名・ログイン不要
+            </span>
+            <h1 className="text-xl font-extrabold tracking-tight text-slate-900">
+              DeepData（来館者データ収集）
+            </h1>
+          </div>
+          <p className="mt-2 text-sm leading-relaxed text-slate-600">
+            設問は最小限です（約30秒）。個人を特定する情報は収集しません。
           </p>
+
+          <div className="mt-4">
+            <div className="flex items-center justify-between text-xs text-slate-500">
+              <span>
+                {stepIndex + 1}/{steps.length}
+              </span>
+              <span>{progress}%</span>
+            </div>
+            <div className="mt-2 h-2 w-full rounded-full bg-slate-200">
+              <div
+                className="h-2 rounded-full bg-slate-900 transition-all"
+                style={{ width: `${progress}%` }}
+              />
+            </div>
+          </div>
         </header>
 
-        <section className="rounded-2xl bg-white p-6 shadow-sm border border-slate-200 space-y-5">
+        <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+          <div className="mb-4">
+            <p className="text-sm font-bold text-slate-900">{current.title}</p>
+            {current.description && (
+              <p className="mt-1 text-xs leading-relaxed text-slate-500">{current.description}</p>
+            )}
+          </div>
 
-          <Field label="年代">
-            <Select
-              value={form.age_band}
-              onChange={(v) => setForm({ ...form, age_band: v })}
-              options={["10代","20代","30代","40代","50代","60代+"]}
-            />
-          </Field>
+          <div className="space-y-2">
+            {current.options.map((opt) => {
+              const checked = currentValue === opt.value;
+              return (
+                <button
+                  key={opt.value}
+                  type="button"
+                  onClick={() => setAnswer(current.key, opt.value)}
+                  className={[
+                    "w-full rounded-xl border px-4 py-3 text-left text-sm transition",
+                    checked
+                      ? "border-slate-900 bg-slate-900 text-white"
+                      : "border-slate-200 bg-white text-slate-900 hover:bg-slate-50",
+                  ].join(" ")}
+                >
+                  <div className="flex items-center justify-between gap-3">
+                    <span className="font-semibold">{opt.label}</span>
+                    {checked && <span className="text-xs font-extrabold">選択中</span>}
+                  </div>
+                </button>
+              );
+            })}
+          </div>
 
-          <Field label="性別">
-            <Select
-              value={form.gender}
-              onChange={(v) => setForm({ ...form, gender: v })}
-              options={["女性","男性","その他/不明"]}
-            />
-          </Field>
+          {!canGoNext && (
+            <p className="mt-3 text-xs font-semibold text-amber-700">
+              ※選択してください
+            </p>
+          )}
 
-          <Field label="同伴">
-            <Select
-              value={form.companion_type}
-              onChange={(v) => setForm({ ...form, companion_type: v })}
-              options={["親子","夫婦/カップル","友人","1人","団体"]}
-            />
-          </Field>
+          <div className="mt-6 flex items-center gap-3">
+            <button
+              type="button"
+              onClick={back}
+              disabled={stepIndex === 0 || isSubmitting}
+              className="rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-bold text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              戻る
+            </button>
 
-          <Field label="来館目的（仮）">
-            <Select
-              value={form.motive}
-              onChange={(v) => setForm({ ...form, motive: v })}
-              options={["学習","デート","子ども","展示（サンゴ）","企画展"]}
-            />
-          </Field>
-
-          <button
-            onClick={submit}
-            disabled={loading}
-            className="w-full rounded-xl bg-slate-900 py-3 text-white font-bold transition hover:bg-slate-800 disabled:bg-slate-400"
-          >
-            {loading ? "送信中..." : "送信"}
-          </button>
+            {!isLast ? (
+              <button
+                type="button"
+                onClick={next}
+                disabled={!canGoNext || isSubmitting}
+                className="ml-auto rounded-xl bg-slate-900 px-5 py-3 text-sm font-extrabold text-white shadow-sm transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:bg-slate-400"
+              >
+                次へ
+              </button>
+            ) : (
+              <button
+                type="button"
+                onClick={submit}
+                disabled={!canGoNext || isSubmitting}
+                className="ml-auto rounded-xl bg-slate-900 px-5 py-3 text-sm font-extrabold text-white shadow-sm transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:bg-slate-400"
+              >
+                {isSubmitting ? "送信中..." : "送信"}
+              </button>
+            )}
+          </div>
 
           {msg && (
-            <div className="rounded-lg bg-emerald-50 border border-emerald-200 p-3 text-sm font-semibold text-emerald-700">
+            <div
+              className={[
+                "mt-4 rounded-xl border px-3 py-2 text-sm font-bold",
+                isError
+                  ? "border-red-200 bg-red-50 text-red-800"
+                  : "border-emerald-200 bg-emerald-50 text-emerald-800",
+              ].join(" ")}
+            >
               {msg}
             </div>
           )}
+
+          <p className="mt-4 text-xs leading-relaxed text-slate-500">
+            ※回答データは統計分析のみに利用します。
+          </p>
         </section>
       </div>
     </main>
-  );
-}
-
-function Field({ label, children }: { label: string; children: React.ReactNode }) {
-  return (
-    <div className="space-y-2">
-      <label className="text-sm font-bold text-slate-800">{label}</label>
-      {children}
-    </div>
-  );
-}
-
-function Select({
-  value,
-  onChange,
-  options,
-}: {
-  value: string;
-  onChange: (v: string) => void;
-  options: string[];
-}) {
-  return (
-    <select
-      value={value}
-      onChange={(e) => onChange(e.target.value)}
-      className="w-full rounded-lg border border-slate-300 px-3 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-slate-400"
-    >
-      {options.map((o) => (
-        <option key={o}>{o}</option>
-      ))}
-    </select>
   );
 }
