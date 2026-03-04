@@ -26,9 +26,22 @@ function isAllowed<T extends readonly string[]>(arr: T, v: any): v is T[number] 
   return typeof v === "string" && (arr as readonly string[]).includes(v);
 }
 
+function isNonEmptyString(v: any) {
+  return typeof v === "string" && v.trim().length > 0;
+}
+
 export async function POST(req: Request) {
   try {
     const body = await req.json();
+
+    // --- 追加：一人一回答（同一端末×同一日）用の入力検証 ---
+    if (!isNonEmptyString(body.respondent_id)) {
+      return NextResponse.json({ error: "invalid respondent_id" }, { status: 400 });
+    }
+    // visit_key は YYYY-MM-DD 形式（JSTでフロントが作る前提）
+    if (!isNonEmptyString(body.visit_key) || !/^\d{4}-\d{2}-\d{2}$/.test(body.visit_key)) {
+      return NextResponse.json({ error: "invalid visit_key" }, { status: 400 });
+    }
 
     // 必須項目バリデーション（ホワイトリスト）
     if (!isAllowed(allowed.age_band, body.age_band)) {
@@ -73,9 +86,14 @@ export async function POST(req: Request) {
       process.env.SUPABASE_SERVICE_ROLE_KEY!
     );
 
-    // NOTE: DB側にカラムを追加してから insert すること
     const { error } = await supabase.from("responses").insert({
       staff_email: null,
+
+      // --- 追加：一人一回答キー ---
+      respondent_id: body.respondent_id,
+      visit_key: body.visit_key,
+
+      // 既存項目
       age_band: body.age_band,
       gender: body.gender,
       residence: body.residence,
@@ -85,10 +103,17 @@ export async function POST(req: Request) {
       info_source: body.info_source,
       top_interest: body.top_interest,
       child_age_band: needsChildAge ? body.child_age_band : null,
-      // 将来拡張しやすいように、ここから自由記述やメモを足してもOK
     });
 
     if (error) {
+      // --- 追加：ユニーク違反は「本日は回答済み」扱いにする ---
+      const msg = (error.message ?? "").toLowerCase();
+      if (msg.includes("duplicate") || msg.includes("unique")) {
+        return NextResponse.json(
+          { error: "already answered today" },
+          { status: 409 }
+        );
+      }
       return NextResponse.json({ error: error.message }, { status: 500 });
     }
 

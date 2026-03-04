@@ -36,9 +36,9 @@ const OPTIONS = {
     { value: "名古屋市", label: "名古屋市" },
     { value: "愛知県（名古屋以外）", label: "愛知県（名古屋以外）" },
     { value: "東海地方", label: "東海地方（岐阜・三重・静岡など）" },
-    { value: "関東（首都圏）", label: "関東（首都圏）" },
-    { value: "関西（近畿）", label: "関西（近畿）" },
-    { value: "その他（国内）", label: "その他（国内）" },
+    { value: "関東", label: "関東（首都圏）" },
+    { value: "関西", label: "関西（近畿）" },
+    { value: "その他", label: "その他（国内）" },
     { value: "海外", label: "海外" },
   ] satisfies Option[],
   companion_type: [
@@ -193,14 +193,38 @@ export default function Home() {
     setIsError(false);
   }
 
+function getRespondentId() {
+  const key = "akw_respondent_id";
+  const existing = typeof window !== "undefined" ? localStorage.getItem(key) : null;
+  if (existing) return existing;
+
+  const id =
+    typeof crypto !== "undefined" && "randomUUID" in crypto
+      ? crypto.randomUUID()
+      : `${Date.now()}-${Math.random().toString(16).slice(2)}`;
+
+  if (typeof window !== "undefined") localStorage.setItem(key, id);
+  return id;
+}
+
+function getVisitKeyJST() {
+  const now = new Date();
+  const jst = new Date(now.getTime() + 9 * 60 * 60 * 1000);
+  return jst.toISOString().slice(0, 10); // YYYY-MM-DD
+}
+
   async function submit() {
     setMsg(null);
     setIsError(false);
     setIsSubmitting(true);
 
-    // 条件分岐が無い場合は child_age_band を空のまま送る（DB側でnullable推奨）
-    const payload = { ...form };
-    if (!needsChildAgeStep) delete (payload as any).child_age_band;
+    // 条件分岐が無い場合は child_age_band を送らない
+    const payload: any = {
+      ...form,
+      respondent_id: getRespondentId(),
+      visit_key: getVisitKeyJST(),
+    };
+    if (!needsChildAgeStep) delete payload.child_age_band;
 
     try {
       const res = await fetch("/api/submit", {
@@ -210,6 +234,11 @@ export default function Home() {
       });
 
       const data = await res.json().catch(() => ({}));
+      if (res.status === 409) {
+        setIsError(false);
+        setMsg("本日はすでに回答済みです。次回のご来館時にまたお願いします。");
+        return;
+      }
       if (!res.ok) {
         setIsError(true);
         setMsg(data.error ?? "送信に失敗しました");
