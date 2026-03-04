@@ -243,12 +243,6 @@ function getVisitKeyJST() {
       });
 
       const data = await res.json().catch(() => ({}));
-      if (res.status === 409) {
-        setIsError(false);
-        setMsg("本日はすでに回答済みです。次回のご来館時にまたお願いします。");
-        setAlreadyAnswered(true);
-        return;
-      }
       if (!res.ok) {
         setIsError(true);
         setMsg(data.error ?? "送信に失敗しました");

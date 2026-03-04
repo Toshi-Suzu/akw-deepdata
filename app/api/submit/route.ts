@@ -34,11 +34,10 @@ export async function POST(req: Request) {
   try {
     const body = await req.json();
 
-    // --- 追加：一人一回答（同一端末×同一日）用の入力検証 ---
+    // --- 一人一回答（同一端末×同一日）用の入力検証 ---
     if (!isNonEmptyString(body.respondent_id)) {
       return NextResponse.json({ error: "invalid respondent_id" }, { status: 400 });
     }
-    // visit_key は YYYY-MM-DD 形式（JSTでフロントが作る前提）
     if (!isNonEmptyString(body.visit_key) || !/^\d{4}-\d{2}-\d{2}$/.test(body.visit_key)) {
       return NextResponse.json({ error: "invalid visit_key" }, { status: 400 });
     }
@@ -69,7 +68,7 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "invalid top_interest" }, { status: 400 });
     }
 
-    // 条件分岐項目（任意だが、条件に当てはまる場合は必須）
+    // 条件分岐項目
     const needsChildAge =
       body.age_band === "30代" &&
       body.gender === "女性" &&
@@ -86,14 +85,13 @@ export async function POST(req: Request) {
       process.env.SUPABASE_SERVICE_ROLE_KEY!
     );
 
-    const { error } = await supabase.from("responses").insert({
+    // ✅ ここがポイント：insert → upsert（同一キーは更新）
+    const row = {
       staff_email: null,
 
-      // --- 追加：一人一回答キー ---
       respondent_id: body.respondent_id,
       visit_key: body.visit_key,
 
-      // 既存項目
       age_band: body.age_band,
       gender: body.gender,
       residence: body.residence,
@@ -103,20 +101,17 @@ export async function POST(req: Request) {
       info_source: body.info_source,
       top_interest: body.top_interest,
       child_age_band: needsChildAge ? body.child_age_band : null,
-    });
+    };
+
+    const { error } = await supabase
+      .from("responses")
+      .upsert(row, { onConflict: "respondent_id,visit_key" });
 
     if (error) {
-      // --- 追加：ユニーク違反は「本日は回答済み」扱いにする ---
-      const msg = (error.message ?? "").toLowerCase();
-      if (msg.includes("duplicate") || msg.includes("unique")) {
-        return NextResponse.json(
-          { error: "already answered today" },
-          { status: 409 }
-        );
-      }
       return NextResponse.json({ error: error.message }, { status: 500 });
     }
 
+    // upsertは「新規作成」か「更新」かをここでは区別しない（UX的にはOK）
     return NextResponse.json({ ok: true });
   } catch {
     return NextResponse.json({ error: "bad request" }, { status: 400 });
