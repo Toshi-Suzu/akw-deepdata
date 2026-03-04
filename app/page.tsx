@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import {  useEffect, useMemo, useState } from "react";
 
 type FormState = {
   age_band: string;
@@ -145,6 +145,15 @@ export default function Home() {
   const [isError, setIsError] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  const [alreadyAnswered, setAlreadyAnswered] = useState(false);
+
+  useEffect(() => {
+    const saved = localStorage.getItem("akw_answered_visit_key");
+    if (saved === getVisitKeyJST()) {
+      setAlreadyAnswered(true);
+    }
+  }, []);
+
   const needsChildAgeStep =
     form.age_band === "30代" &&
     form.gender === "女性" &&
@@ -245,6 +254,9 @@ function getVisitKeyJST() {
       } else {
         setIsError(false);
         setMsg("送信しました（ご協力ありがとうございました）");
+
+        localStorage.setItem("akw_answered_visit_key", getVisitKeyJST());
+        setAlreadyAnswered(true);
       }
     } catch {
       setIsError(true);
@@ -255,6 +267,42 @@ function getVisitKeyJST() {
   }
 
   const isLast = stepIndex === steps.length - 1;
+
+// ★追加：今日すでに回答していたらフォームを出さない
+if (alreadyAnswered) {
+  return (
+    <main className="min-h-screen bg-slate-50 px-4 py-10">
+      <div className="mx-auto w-full max-w-xl">
+        <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+          <h1 className="text-lg font-extrabold text-slate-900">
+            本日はすでに回答いただいています
+          </h1>
+          <p className="mt-2 text-sm text-slate-600">
+            ご協力ありがとうございます。次回のご来館時にまたお願いします。
+          </p>
+
+          <div className="mt-5">
+            <button
+              type="button"
+              onClick={() => {
+                // どうしてもやり直したい場合だけ使う“裏口”（任意）
+                localStorage.removeItem("akw_answered_visit_key");
+                setAlreadyAnswered(false);
+              }}
+              className="rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-bold text-slate-700 hover:bg-slate-50"
+            >
+              （テスト用）もう一度回答する
+            </button>
+          </div>
+
+          <p className="mt-4 text-xs text-slate-500">
+            ※同一端末では1日1回まで回答できます。
+          </p>
+        </section>
+      </div>
+    </main>
+  );
+}
 
   return (
     <main className="min-h-screen bg-slate-50 px-4 py-10">
