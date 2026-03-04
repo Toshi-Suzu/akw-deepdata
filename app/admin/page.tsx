@@ -47,8 +47,7 @@ export default function Admin() {
   const [stats, setStats] = useState<StatsResponse | null>(null);
   const [loading, setLoading] = useState(false);
 
-  // ADMIN_TOKENを使う場合は、ここに手入力 or ローカルでだけ固定でもOK
-  const [token, setToken] = useState("");
+  const [token, setToken] = useState(""); // URLから自動取得して保持
 
   const qs = useMemo(() => {
     const p = new URLSearchParams();
@@ -61,17 +60,42 @@ export default function Admin() {
   }, [ageBand, gender, dateFrom, dateTo, token]);
 
   async function load() {
-    setLoading(true);
-    const res = await fetch(`/api/stats?${qs}`, { cache: "no-store" });
-    const json = (await res.json().catch(() => ({}))) as StatsResponse;
-    setStats(json);
+  setLoading(true);
+
+  const res = await fetch(`/api/stats?${qs}`, { cache: "no-store" });
+  const json = await res.json().catch(() => ({} as any));
+
+  if (!res.ok) {
+    setStats({
+      ok: false,
+      total: 0,
+      today: 0,
+      last7d: 0,
+      filters: { age_band: ageBand, gender, date_from: dateFrom, date_to: dateTo },
+      groups: {},
+      error: json?.error ?? `error (${res.status})`,
+    });
     setLoading(false);
+    return;
   }
 
-  useEffect(() => {
-    load();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  setStats(json);
+  setLoading(false);
+}
+
+useEffect(() => {
+  const p = new URLSearchParams(window.location.search);
+  const t = p.get("token") ?? "";
+  setToken(t);
+}, []);
+
+useEffect(() => {
+  // tokenが空のままでも動かしたいならこのままでOK。
+  // ADMIN_TOKENを設定している運用なら、tokenが入った後に叩くのが安全。
+  if (process.env.NEXT_PUBLIC_REQUIRE_ADMIN_TOKEN === "1" && !token) return;
+  load();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+}, [token]);
 
   const groups = stats?.groups ?? {};
 
@@ -166,16 +190,6 @@ export default function Admin() {
               />
             </div>
 
-            {/* トークン運用する場合だけ使う */}
-            <div className="md:col-span-6">
-              <label className="text-xs font-bold text-slate-700">管理トークン（任意）</label>
-              <input
-                value={token}
-                onChange={(e) => setToken(e.target.value)}
-                placeholder="ADMIN_TOKENを設定した場合のみ必要"
-                className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2 text-sm"
-              />
-            </div>
           </div>
 
           <div className="mt-4 flex flex-wrap gap-3">
