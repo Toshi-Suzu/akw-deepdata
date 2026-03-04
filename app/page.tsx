@@ -36,9 +36,9 @@ const OPTIONS = {
     { value: "名古屋市", label: "名古屋市" },
     { value: "愛知県（名古屋以外）", label: "愛知県（名古屋以外）" },
     { value: "東海地方", label: "東海地方（岐阜・三重・静岡など）" },
-    { value: "関東", label: "関東" },
-    { value: "関西", label: "関西" },
-    { value: "その他", label: "その他" },
+    { value: "関東（首都圏）", label: "関東（首都圏）" },
+    { value: "関西（近畿）", label: "関西（近畿）" },
+    { value: "その他（国内）", label: "その他（国内）" },
     { value: "海外", label: "海外" },
   ] satisfies Option[],
   companion_type: [
