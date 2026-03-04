@@ -39,15 +39,33 @@ function BarList({ title, items }: { title: string; items: StatItem[] }) {
   );
 }
 
+function Kpi({ label, value }: { label: string; value: any }) {
+  return (
+    <div className="rounded-2xl border border-slate-200 bg-white px-4 py-3 shadow-sm">
+      <div className="text-xs font-bold text-slate-600">{label}</div>
+      <div className="mt-1 text-xl font-extrabold text-slate-900">{value}</div>
+    </div>
+  );
+}
+
 export default function Admin() {
   const [ageBand, setAgeBand] = useState("");
   const [gender, setGender] = useState("");
   const [dateFrom, setDateFrom] = useState("");
   const [dateTo, setDateTo] = useState("");
+
   const [stats, setStats] = useState<StatsResponse | null>(null);
   const [loading, setLoading] = useState(false);
 
-  const [token, setToken] = useState(""); // URLから自動取得して保持
+  // URLから自動取得
+  const [token, setToken] = useState("");
+
+  // URLから token を取得（初回のみ）
+  useEffect(() => {
+    const p = new URLSearchParams(window.location.search);
+    const t = p.get("token") ?? "";
+    setToken(t);
+  }, []);
 
   const qs = useMemo(() => {
     const p = new URLSearchParams();
@@ -60,42 +78,52 @@ export default function Admin() {
   }, [ageBand, gender, dateFrom, dateTo, token]);
 
   async function load() {
-  setLoading(true);
+    setLoading(true);
 
-  const res = await fetch(`/api/stats?${qs}`, { cache: "no-store" });
-  const json = await res.json().catch(() => ({} as any));
+    const res = await fetch(`/api/stats?${qs}`, { cache: "no-store" });
+    const json = await res.json().catch(() => ({} as any));
 
-  if (!res.ok) {
-    setStats({
-      ok: false,
-      total: 0,
-      today: 0,
-      last7d: 0,
-      filters: { age_band: ageBand, gender, date_from: dateFrom, date_to: dateTo },
-      groups: {},
-      error: json?.error ?? `error (${res.status})`,
-    });
+    if (!res.ok) {
+      setStats({
+        ok: false,
+        total: 0,
+        today: 0,
+        last7d: 0,
+        filters: { age_band: ageBand, gender, date_from: dateFrom, date_to: dateTo },
+        groups: {},
+        error: json?.error ?? `error (${res.status})`,
+      });
+      setLoading(false);
+      return;
+    }
+
+    setStats(json);
     setLoading(false);
-    return;
   }
 
-  setStats(json);
-  setLoading(false);
-}
+  // tokenが取れたら初回集計（token無しなら叩かない）
+  useEffect(() => {
+    if (!token) return;
+    load();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [token]);
 
-useEffect(() => {
-  const p = new URLSearchParams(window.location.search);
-  const t = p.get("token") ?? "";
-  setToken(t);
-}, []);
-
-useEffect(() => {
-  // tokenが空のままでも動かしたいならこのままでOK。
-  // ADMIN_TOKENを設定している運用なら、tokenが入った後に叩くのが安全。
-  if (process.env.NEXT_PUBLIC_REQUIRE_ADMIN_TOKEN === "1" && !token) return;
-  load();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-}, [token]);
+  // token無しアクセスの場合は、分かりやすく案内を出す
+  if (!token) {
+    return (
+      <main className="min-h-screen bg-slate-50 px-4 py-10">
+        <div className="mx-auto max-w-xl rounded-2xl border border-amber-200 bg-amber-50 p-6">
+          <h1 className="text-lg font-extrabold text-amber-900">管理トークンが必要です</h1>
+          <p className="mt-2 text-sm text-amber-800">
+            URLに <span className="font-mono font-bold">?token=...</span> を付けてアクセスしてください。
+          </p>
+          <p className="mt-2 text-xs text-amber-800">
+            例：<span className="font-mono">/admin?token=secret-zaidan</span>
+          </p>
+        </div>
+      </main>
+    );
+  }
 
   const groups = stats?.groups ?? {};
 
@@ -116,11 +144,11 @@ useEffect(() => {
               onClick={() => {
                 setAgeBand("30代");
                 setGender("女性");
-                setTimeout(load, 0);
               }}
             >
               30代女性に絞る
             </button>
+
             <button
               className="rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-bold text-slate-700 hover:bg-slate-50"
               onClick={() => {
@@ -128,11 +156,11 @@ useEffect(() => {
                 setGender("");
                 setDateFrom("");
                 setDateTo("");
-                setTimeout(load, 0);
               }}
             >
               リセット
             </button>
+
             <button
               className="rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-bold text-slate-700 hover:bg-slate-50"
               onClick={load}
@@ -153,8 +181,12 @@ useEffect(() => {
                 className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2 text-sm"
               >
                 <option value="">（全体）</option>
-                <option>10代</option><option>20代</option><option>30代</option>
-                <option>40代</option><option>50代</option><option>60代+</option>
+                <option>10代</option>
+                <option>20代</option>
+                <option>30代</option>
+                <option>40代</option>
+                <option>50代</option>
+                <option>60代+</option>
               </select>
             </div>
 
@@ -166,7 +198,9 @@ useEffect(() => {
                 className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2 text-sm"
               >
                 <option value="">（全体）</option>
-                <option>女性</option><option>男性</option><option>回答しない</option>
+                <option>女性</option>
+                <option>男性</option>
+                <option>回答しない</option>
               </select>
             </div>
 
@@ -189,7 +223,6 @@ useEffect(() => {
                 className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2 text-sm"
               />
             </div>
-
           </div>
 
           <div className="mt-4 flex flex-wrap gap-3">
@@ -229,14 +262,5 @@ useEffect(() => {
         </p>
       </div>
     </main>
-  );
-}
-
-function Kpi({ label, value }: { label: string; value: any }) {
-  return (
-    <div className="rounded-2xl border border-slate-200 bg-white px-4 py-3 shadow-sm">
-      <div className="text-xs font-bold text-slate-600">{label}</div>
-      <div className="mt-1 text-xl font-extrabold text-slate-900">{value}</div>
-    </div>
   );
 }
