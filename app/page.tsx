@@ -246,6 +246,7 @@ function getVisitKeyJST() {
       if (res.status === 409) {
         setIsError(false);
         setMsg("本日はすでに回答済みです。次回のご来館時にまたお願いします。");
+        setAlreadyAnswered(true);
         return;
       }
       if (!res.ok) {
