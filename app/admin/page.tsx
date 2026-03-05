@@ -149,7 +149,9 @@ export default function AdminCompare() {
   const [mode, setMode] = useState<"preset" | "manual">("preset");
 
   // presets
-  const [presetA, setPresetA] = useState<"thisMonth" | "lastMonth" | "last30d" | "thisFY" | "lastFY">("thisMonth");
+  const [presetA, setPresetA] = useState<
+    "thisMonth" | "lastMonth" | "last30d" | "thisFY" | "lastFY"
+  >("thisMonth");
   const [presetB, setPresetB] = useState<"lastMonth" | "last30d" | "lastFY">("lastMonth");
   const [linkYoY, setLinkYoY] = useState(true);
 
@@ -163,8 +165,6 @@ export default function AdminCompare() {
   const [groupKey, setGroupKey] = useState<GroupKey>("residence");
   const [analysisMode, setAnalysisMode] = useState<"seg" | "period">("seg");
   const [basis, setBasis] = useState<"baseline" | "segment">("baseline"); // period比較のときだけ有効
-
-  // for seg analysis: choose period A or B
   const [segPeriod, setSegPeriod] = useState<"A" | "B">("A");
 
   // data
@@ -203,7 +203,7 @@ export default function AdminCompare() {
 
     if (fromA) p.set("fromA", fromA);
     if (toA) p.set("toA", toA);
-    if (fromB) p.set("fromB", fromB);
+    if (fromB) p.set("fromB", fromB); // ★修正：fromBを正しく
     if (toB) p.set("toB", toB);
 
     if (ageBand) p.set("age_band", ageBand);
@@ -219,8 +219,22 @@ export default function AdminCompare() {
       setData({
         ok: false,
         filters: { age_band: ageBand, gender },
-        periodA: { from: fromA, to: toA, baselineTotal: 0, segmentTotal: 0, baselineGroups: {}, segmentGroups: {} },
-        periodB: { from: fromB, to: toB, baselineTotal: 0, segmentTotal: 0, baselineGroups: {}, segmentGroups: {} },
+        periodA: {
+          from: fromA,
+          to: toA,
+          baselineTotal: 0,
+          segmentTotal: 0,
+          baselineGroups: {},
+          segmentGroups: {},
+        },
+        periodB: {
+          from: fromB,
+          to: toB,
+          baselineTotal: 0,
+          segmentTotal: 0,
+          baselineGroups: {},
+          segmentGroups: {},
+        },
         error: "期間A/Bの from/to を指定してください",
       });
       return;
@@ -234,8 +248,22 @@ export default function AdminCompare() {
       setData({
         ok: false,
         filters: { age_band: ageBand, gender },
-        periodA: { from: fromA, to: toA, baselineTotal: 0, segmentTotal: 0, baselineGroups: {}, segmentGroups: {} },
-        periodB: { from: fromB, to: toB, baselineTotal: 0, segmentTotal: 0, baselineGroups: {}, segmentGroups: {} },
+        periodA: {
+          from: fromA,
+          to: toA,
+          baselineTotal: 0,
+          segmentTotal: 0,
+          baselineGroups: {},
+          segmentGroups: {},
+        },
+        periodB: {
+          from: fromB,
+          to: toB,
+          baselineTotal: 0,
+          segmentTotal: 0,
+          baselineGroups: {},
+          segmentGroups: {},
+        },
         error: json?.error ?? `error (${res.status})`,
       });
       setLoading(false);
@@ -249,8 +277,6 @@ export default function AdminCompare() {
   // initial load once everything is ready
   useEffect(() => {
     if (!token) return;
-
-    // 期間がまだセットされてないときは実行しない
     if (!fromA || !toA || !fromB || !toB) return;
 
     const t = setTimeout(() => load(), 0);
@@ -259,21 +285,20 @@ export default function AdminCompare() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [token, fromA, toA, fromB, toB]);
 
-  if (!token) {
-    return (
-      <main className="min-h-screen bg-slate-50 px-4 py-10">
-        <div className="mx-auto max-w-xl rounded-2xl border border-amber-200 bg-amber-50 p-6">
-          <h1 className="text-lg font-extrabold text-amber-900">管理トークンが必要です</h1>
-          <p className="mt-2 text-sm text-amber-800">
-            URLに <span className="font-mono font-bold">?token=...</span> を付けてアクセスしてください。
-          </p>
-          <p className="mt-2 text-xs text-amber-800">
-            例：<span className="font-mono">/admin?token=secret-zaidan</span>
-          </p>
-        </div>
-      </main>
-    );
-  }
+  // ---- ここから先は token がなくても Hooks が同じ順で呼ばれるようにする（重要） ----
+  const tokenRequiredView = (
+    <main className="min-h-screen bg-slate-50 px-4 py-10">
+      <div className="mx-auto max-w-xl rounded-2xl border border-amber-200 bg-amber-50 p-6">
+        <h1 className="text-lg font-extrabold text-amber-900">管理トークンが必要です</h1>
+        <p className="mt-2 text-sm text-amber-800">
+          URLに <span className="font-mono font-bold">?token=...</span> を付けてアクセスしてください。
+        </p>
+        <p className="mt-2 text-xs text-amber-800">
+          例：<span className="font-mono">/admin?token=secret-zaidan</span>
+        </p>
+      </div>
+    </main>
+  );
 
   // helpers to build dist from items
   function toDist(items: StatItem[]) {
@@ -287,9 +312,8 @@ export default function AdminCompare() {
 
   // === Mode 1: seg analysis (within one period) ===
   const segPack = segPeriod === "A" ? a : b;
-
-  const segLeftItems = (segPack?.baselineGroups?.[groupKey] ?? []) as StatItem[]; // left = baseline
-  const segRightItems = (segPack?.segmentGroups?.[groupKey] ?? []) as StatItem[]; // right = segment
+  const segLeftItems = (segPack?.baselineGroups?.[groupKey] ?? []) as StatItem[];
+  const segRightItems = (segPack?.segmentGroups?.[groupKey] ?? []) as StatItem[];
 
   const segRows = useMemo(() => {
     if (!segPack) return [];
@@ -303,7 +327,6 @@ export default function AdminCompare() {
   }, [segPack, groupKey, segPeriod, data]);
 
   // === Mode 2: period analysis (A vs B) ===
-  // left = Period B, right = Period A  => diff = A - B
   const periodLeftPack = b;
   const periodRightPack = a;
 
@@ -316,8 +339,10 @@ export default function AdminCompare() {
       ? ((periodRightPack?.baselineGroups?.[groupKey] ?? []) as StatItem[])
       : ((periodRightPack?.segmentGroups?.[groupKey] ?? []) as StatItem[]);
 
-  const leftTotal = basis === "baseline" ? (periodLeftPack?.baselineTotal ?? 0) : (periodLeftPack?.segmentTotal ?? 0);
-  const rightTotal = basis === "baseline" ? (periodRightPack?.baselineTotal ?? 0) : (periodRightPack?.segmentTotal ?? 0);
+  const leftTotal =
+    basis === "baseline" ? (periodLeftPack?.baselineTotal ?? 0) : (periodLeftPack?.segmentTotal ?? 0);
+  const rightTotal =
+    basis === "baseline" ? (periodRightPack?.baselineTotal ?? 0) : (periodRightPack?.segmentTotal ?? 0);
 
   const periodRows = useMemo(() => {
     if (!periodLeftPack || !periodRightPack) return [];
@@ -325,7 +350,10 @@ export default function AdminCompare() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [data, groupKey, basis]);
 
-  return (
+  // ---- 最終renderで出し分け（Hook順序を壊さない） ----
+  return !token ? (
+    tokenRequiredView
+  ) : (
     <main className="min-h-screen bg-slate-50 px-4 py-10">
       <div className="mx-auto max-w-7xl space-y-6">
         <header className="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
@@ -488,9 +516,7 @@ export default function AdminCompare() {
                   ))}
                 </div>
 
-                <p className="mt-3 text-xs text-slate-600">
-                  ※ 前年同月は「A=今月」＋チェックONで自動セット。
-                </p>
+                <p className="mt-3 text-xs text-slate-600">※ 前年同月は「A=今月」＋チェックONで自動セット。</p>
               </div>
             </div>
           )}
@@ -676,13 +702,17 @@ export default function AdminCompare() {
         {analysisMode === "seg" ? (
           <DiffTable
             title={`${segPeriod === "A" ? "期間A" : "期間B"}：${GROUP_TITLES[groupKey]}（全体 vs セグ）`}
-            subtitle={`左=全体 / 右=${ageBand || gender ? `${ageBand || ""}${gender || ""}` : "（全体）"}（※セグ未指定なら同じ）`}
+            subtitle={`左=全体 / 右=${
+              ageBand || gender ? `${ageBand || ""}${gender || ""}` : "（全体）"
+            }（※セグ未指定なら同じ）`}
             rows={segRows}
           />
         ) : (
           <DiffTable
             title={`${GROUP_TITLES[groupKey]}（期間A vs 期間B）`}
-            subtitle={`左=期間B（${fromB}〜${toB}） / 右=期間A（${fromA}〜${toA}） / 基準=${basis === "baseline" ? "全体" : "セグ"}`}
+            subtitle={`左=期間B（${fromB}〜${toB}） / 右=期間A（${fromA}〜${toA}） / 基準=${
+              basis === "baseline" ? "全体" : "セグ"
+            }`}
             rows={periodRows}
           />
         )}
