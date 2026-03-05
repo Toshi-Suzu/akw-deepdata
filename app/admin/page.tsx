@@ -212,9 +212,9 @@ export default function AdminCompare() {
     if (token) p.set("token", token);
 
     if (fromA) p.set("fromA", fromA);
-    if (toA) p.set("toA", inclusiveToExclusiveDate(toA));
+    if (toA) p.set("toA", toA);
     if (fromB) p.set("fromB", fromB);
-    if (toB) p.set("toB", inclusiveToExclusiveDate(toB));
+    if (toB) p.set("toB", toB);
 
     if (ageBand) p.set("age_band", ageBand);
     if (gender) p.set("gender", gender);
@@ -228,9 +228,9 @@ export default function AdminCompare() {
 
     // compareと同じ期間
     if (fromA) p.set("fromA", fromA);
-    if (toA) p.set("toA", inclusiveToExclusiveDate(toA));
+    if (toA) p.set("toA", toA);
     if (fromB) p.set("fromB", fromB);
-    if (toB) p.set("toB", inclusiveToExclusiveDate(toB));
+    if (toB) p.set("toB", toB);
 
     // セグ条件（diffに効く）
     if (ageBand) p.set("age_band", ageBand);

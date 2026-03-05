@@ -54,15 +54,15 @@ async function fetchRows(
   toYmd: string,
   seg?: { age_band?: string; gender?: string }
 ) {
-  const { fromIso, toIso } = toExclusiveUtcIso(fromYmd, toYmd);
-
+  // visit_key は YYYY-MM-DD の文字列なので、期間は文字列比較でOK（同形式）
+  // 期間は UI が「〜まで（inclusive）」で渡してくる前提で lte にする
   let q = supabase
     .from("responses")
     .select(
-      "created_at,age_band,gender,residence,companion_type,visit_frequency,trigger,info_source,top_interest,child_age_band"
+      "visit_key,created_at,age_band,gender,residence,companion_type,visit_frequency,trigger,info_source,top_interest,child_age_band"
     )
-    .gte("created_at", fromIso)
-    .lt("created_at", toIso);
+    .gte("visit_key", fromYmd)
+    .lte("visit_key", toYmd);
 
   if (seg?.age_band) q = q.eq("age_band", seg.age_band);
   if (seg?.gender) q = q.eq("gender", seg.gender);
