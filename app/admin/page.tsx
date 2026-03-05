@@ -212,6 +212,29 @@ export default function AdminCompare() {
     return p.toString();
   }, [token, fromA, toA, fromB, toB, ageBand, gender]);
 
+  function exportUrl(extra: Record<string, string>) {
+    const p = new URLSearchParams();
+    if (token) p.set("token", token);
+
+    // compareと同じ期間
+    if (fromA) p.set("fromA", fromA);
+    if (toA) p.set("toA", toA);
+    if (fromB) p.set("fromB", fromB);
+    if (toB) p.set("toB", toB);
+
+    // セグ条件（diffに効く）
+    if (ageBand) p.set("age_band", ageBand);
+    if (gender) p.set("gender", gender);
+
+    for (const [k, v] of Object.entries(extra)) p.set(k, v);
+
+    return `/api/export?${p.toString()}`;
+  }
+
+  function downloadCsv(extra: Record<string, string>) {
+    window.location.href = exportUrl(extra);
+  }
+
   async function load() {
     if (!token) return;
 
@@ -404,6 +427,53 @@ export default function AdminCompare() {
             >
               {loading ? "集計中…" : "更新"}
             </button>
+<div className="flex flex-wrap gap-2">
+  <button
+    className="rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-bold text-slate-700 hover:bg-slate-50"
+    onClick={() => downloadCsv({ type: "rows", period: "A" })}
+  >
+    行CSV（期間A）
+  </button>
+
+  <button
+    className="rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-bold text-slate-700 hover:bg-slate-50"
+    onClick={() => downloadCsv({ type: "rows", period: "B" })}
+  >
+    行CSV（期間B）
+  </button>
+
+  <button
+    className="rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-bold text-slate-700 hover:bg-slate-50"
+    onClick={() => downloadCsv({ type: "diff", diff_mode: "seg", period: "A", group: "all" })}
+  >
+    差分CSV（全体vsセグ：A）
+  </button>
+
+  <button
+    className="rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-bold text-slate-700 hover:bg-slate-50"
+    onClick={() => downloadCsv({ type: "diff", diff_mode: "seg", period: "B", group: "all" })}
+  >
+    差分CSV（全体vsセグ：B）
+  </button>
+
+  <button
+    className="rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-bold text-slate-700 hover:bg-slate-50"
+    onClick={() =>
+      downloadCsv({ type: "diff", diff_mode: "period", basis: "baseline", group: "all" })
+    }
+  >
+    差分CSV（A vs B：全体）
+  </button>
+
+  <button
+    className="rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-bold text-slate-700 hover:bg-slate-50"
+    onClick={() =>
+      downloadCsv({ type: "diff", diff_mode: "period", basis: "segment", group: "all" })
+    }
+  >
+    差分CSV（A vs B：セグ）
+  </button>
+</div>
           </div>
         </header>
 
