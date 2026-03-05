@@ -130,7 +130,9 @@ function presetLabel(id: string) {
 
 function exclusiveToInclusiveDate(exclusiveYmd: string) {
   // exclusive end (YYYY-MM-DD) の前日を inclusive 表示にする
+  if (!exclusiveYmd || !/^\d{4}-\d{2}-\d{2}$/.test(exclusiveYmd)) return "";
   const dt = new Date(exclusiveYmd + "T00:00:00Z");
+  if (Number.isNaN(dt.getTime())) return "";
   dt.setUTCDate(dt.getUTCDate() - 1);
   return dt.toISOString().slice(0, 10);
 }
@@ -244,13 +246,18 @@ export default function AdminCompare() {
     setLoading(false);
   }
 
-  // initial load
+  // initial load once everything is ready
   useEffect(() => {
     if (!token) return;
+
+    // 期間がまだセットされてないときは実行しない
+    if (!fromA || !toA || !fromB || !toB) return;
+
     const t = setTimeout(() => load(), 0);
     return () => clearTimeout(t);
+
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [token]);
+  }, [token, fromA, toA, fromB, toB]);
 
   if (!token) {
     return (
