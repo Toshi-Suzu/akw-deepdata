@@ -144,6 +144,7 @@ export default function AdminCompare() {
 
   // token
   const [token, setToken] = useState("");
+  const [tokenInput, setTokenInput] = useState("");
 
   // period mode
   const [mode, setMode] = useState<"preset" | "manual">("preset");
@@ -171,10 +172,10 @@ export default function AdminCompare() {
   const [data, setData] = useState<CompareResponse | null>(null);
   const [loading, setLoading] = useState(false);
 
-  // token from URL
+  // 初回ロード時：localStorage から token を取得
   useEffect(() => {
-    const p = new URLSearchParams(window.location.search);
-    setToken(p.get("token") ?? "");
+    const saved = localStorage.getItem("admin_token") ?? "";
+    setToken(saved);
   }, []);
 
   // apply presets to manual dates
@@ -308,16 +309,41 @@ export default function AdminCompare() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [token, fromA, toA, fromB, toB]);
 
-  // ---- ここから先は token がなくても Hooks が同じ順で呼ばれるようにする（重要） ----
   const tokenRequiredView = (
-    <main className="min-h-screen bg-slate-50 px-4 py-10">
-      <div className="mx-auto max-w-xl rounded-2xl border border-amber-200 bg-amber-50 p-6">
-        <h1 className="text-lg font-extrabold text-amber-900">管理トークンが必要です</h1>
-        <p className="mt-2 text-sm text-amber-800">
-          URLに <span className="font-mono font-bold">?token=...</span> を付けてアクセスしてください。
-        </p>
-        <p className="mt-2 text-xs text-amber-800">
-          例：<span className="font-mono">/admin?token=secret-zaidan</span>
+    <main className="min-h-screen bg-slate-50 px-4 py-10 flex items-center justify-center">
+      <div className="w-full max-w-sm rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+        <h1 className="text-lg font-extrabold text-slate-900">管理トークン入力</h1>
+        <p className="mt-2 text-sm text-slate-600">最初の1回だけ入力してください（端末に保存されます）</p>
+
+        <input
+          type="password"
+          value={tokenInput}
+          onChange={(e) => setTokenInput(e.target.value)}
+          placeholder="管理トークン"
+          className="mt-4 w-full rounded-xl border border-slate-200 px-3 py-2 text-sm"
+          onKeyDown={(e) => {
+            if (e.key === "Enter") {
+              const v = tokenInput.trim();
+              localStorage.setItem("admin_token", v);
+              setToken(v);
+            }
+          }}
+        />
+
+        <button
+          className="mt-4 w-full rounded-xl bg-slate-900 px-4 py-2 text-sm font-extrabold text-white hover:bg-slate-800"
+          onClick={() => {
+            const v = tokenInput.trim();
+            localStorage.setItem("admin_token", v);
+            setToken(v);
+          }}
+          disabled={!tokenInput.trim()}
+        >
+          ログイン
+        </button>
+
+        <p className="mt-3 text-xs text-slate-500">
+          ※ トークンを間違えると集計APIが401になります（その場合はログアウトして再入力）。
         </p>
       </div>
     </main>
@@ -427,53 +453,65 @@ export default function AdminCompare() {
             >
               {loading ? "集計中…" : "更新"}
             </button>
-<div className="flex flex-wrap gap-2">
-  <button
-    className="rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-bold text-slate-700 hover:bg-slate-50"
-    onClick={() => downloadCsv({ type: "rows", period: "A" })}
-  >
-    行CSV（期間A）
-  </button>
 
-  <button
-    className="rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-bold text-slate-700 hover:bg-slate-50"
-    onClick={() => downloadCsv({ type: "rows", period: "B" })}
-  >
-    行CSV（期間B）
-  </button>
+            <div className="flex flex-wrap gap-2">
+              <button
+                className="rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-bold text-slate-700 hover:bg-slate-50"
+                onClick={() => downloadCsv({ type: "rows", period: "A" })}
+              >
+                行CSV（期間A）
+              </button>
 
-  <button
-    className="rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-bold text-slate-700 hover:bg-slate-50"
-    onClick={() => downloadCsv({ type: "diff", diff_mode: "seg", period: "A", group: "all" })}
-  >
-    差分CSV（全体vsセグ：A）
-  </button>
+              <button
+                className="rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-bold text-slate-700 hover:bg-slate-50"
+                onClick={() => downloadCsv({ type: "rows", period: "B" })}
+              >
+                行CSV（期間B）
+              </button>
 
-  <button
-    className="rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-bold text-slate-700 hover:bg-slate-50"
-    onClick={() => downloadCsv({ type: "diff", diff_mode: "seg", period: "B", group: "all" })}
-  >
-    差分CSV（全体vsセグ：B）
-  </button>
+              <button
+                className="rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-bold text-slate-700 hover:bg-slate-50"
+                onClick={() => downloadCsv({ type: "diff", diff_mode: "seg", period: "A", group: "all" })}
+              >
+                差分CSV（全体vsセグ：A）
+              </button>
 
-  <button
-    className="rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-bold text-slate-700 hover:bg-slate-50"
-    onClick={() =>
-      downloadCsv({ type: "diff", diff_mode: "period", basis: "baseline", group: "all" })
-    }
-  >
-    差分CSV（A vs B：全体）
-  </button>
+              <button
+                className="rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-bold text-slate-700 hover:bg-slate-50"
+                onClick={() => downloadCsv({ type: "diff", diff_mode: "seg", period: "B", group: "all" })}
+              >
+                差分CSV（全体vsセグ：B）
+              </button>
 
-  <button
-    className="rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-bold text-slate-700 hover:bg-slate-50"
-    onClick={() =>
-      downloadCsv({ type: "diff", diff_mode: "period", basis: "segment", group: "all" })
-    }
-  >
-    差分CSV（A vs B：セグ）
-  </button>
-</div>
+              <button
+                className="rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-bold text-slate-700 hover:bg-slate-50"
+                onClick={() =>
+                  downloadCsv({ type: "diff", diff_mode: "period", basis: "baseline", group: "all" })
+                }
+              >
+                差分CSV（A vs B：全体）
+              </button>
+
+              <button
+                className="rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-bold text-slate-700 hover:bg-slate-50"
+                onClick={() =>
+                  downloadCsv({ type: "diff", diff_mode: "period", basis: "segment", group: "all" })
+                }
+              >
+                差分CSV（A vs B：セグ）
+              </button>
+
+              <button
+                className="rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-bold text-slate-700 hover:bg-slate-50"
+                onClick={() => {
+                  localStorage.removeItem("admin_token");
+                  location.reload();
+                }}
+              >
+                ログアウト
+              </button>
+
+            </div>
           </div>
         </header>
 
