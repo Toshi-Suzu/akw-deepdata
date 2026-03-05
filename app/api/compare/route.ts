@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { createClient } from "@supabase/supabase-js";
+import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import { GROUP_KEYS, type GroupKey } from "@/app/questions";
 
 type StatItem = { label: string; count: number };
@@ -49,7 +49,7 @@ function toExclusiveUtcIso(fromYmd: string, toYmd: string): { fromIso: string; t
 }
 
 async function fetchRows(
-  supabase: ReturnType<typeof createClient>,
+  supabase: SupabaseClient,
   fromYmd: string,
   toYmd: string,
   seg?: { age_band?: string; gender?: string }
