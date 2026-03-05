@@ -54,8 +54,6 @@ async function fetchRows(
   toYmd: string,
   seg?: { age_band?: string; gender?: string }
 ) {
-  // visit_key は YYYY-MM-DD の文字列なので、期間は文字列比較でOK（同形式）
-  // 期間は UI が「〜まで（inclusive）」で渡してくる前提で lte にする
   let q = supabase
     .from("responses")
     .select(
@@ -68,6 +66,14 @@ async function fetchRows(
   if (seg?.gender) q = q.eq("gender", seg.gender);
 
   const { data, error } = await q;
+
+  console.log("COMPARE fetchRows", {
+    fromYmd,
+    toYmd,
+    seg,
+    rows: data?.length
+  });
+
   if (error) throw new Error(error.message);
   return data ?? [];
 }
