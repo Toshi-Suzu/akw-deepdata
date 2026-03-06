@@ -209,7 +209,7 @@ export default function AdminCompare() {
 
   const qs = useMemo(() => {
     const p = new URLSearchParams();
-    if (token) p.set("token", token);
+    p.set("token", token);
 
     if (fromA) p.set("fromA", fromA);
     if (toA) p.set("toA", toA);
@@ -246,7 +246,10 @@ export default function AdminCompare() {
   }
 
   async function load() {
-    if (!token) return;
+    if (!token) {
+      console.log("token not ready");
+      return;
+    }
 
     if (!fromA || !toA || !fromB || !toB) {
       setData({
