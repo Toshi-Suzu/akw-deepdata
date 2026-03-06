@@ -8,6 +8,18 @@ import { buildDiffTable, type DiffRow } from "@/app/lib/diff";
 type StatItem = { label: string; count: number };
 type Groups = Record<string, StatItem[]>;
 
+type ApiDiffItem = {
+  groupKey: GroupKey;
+  label: string;
+  baselineCount: number;
+  baselineRatio: number;
+  segmentCount: number;
+  segmentRatio: number;
+  diffPt: number;
+};
+
+type Diffs = Record<string, ApiDiffItem[]>;
+
 type PeriodPack = {
   from: string;
   to: string;
@@ -15,6 +27,7 @@ type PeriodPack = {
   segmentTotal: number;
   baselineGroups: Groups;
   segmentGroups: Groups;
+  diffs: Diffs;
 };
 
 type CompareResponse = {
@@ -111,6 +124,66 @@ function DiffTable({
   );
 }
 
+function DiffSummaryCard({
+  title,
+  items,
+}: {
+  title: string;
+  items: ApiDiffItem[];
+}) {
+  return (
+    <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+      <div className="flex items-end justify-between gap-3">
+        <div>
+          <h3 className="text-sm font-extrabold text-slate-900">{title}</h3>
+          <p className="mt-1 text-xs text-slate-600">全体→セグの差分が大きい順（pt）</p>
+        </div>
+      </div>
+
+      <div className="mt-3 overflow-auto">
+        <table className="min-w-[760px] w-full text-sm">
+          <thead>
+            <tr className="text-xs text-slate-600">
+              <th className="text-left py-2 pr-3">カテゴリ</th>
+              <th className="text-right py-2 px-2">全体</th>
+              <th className="text-right py-2 px-2">セグ</th>
+              <th className="text-right py-2 px-2">差分</th>
+              <th className="text-right py-2 pl-2">n(セグ)</th>
+            </tr>
+          </thead>
+          <tbody>
+            {items.slice(0, 3).map((r) => (
+              <tr key={`${r.groupKey}-${r.label}`} className="border-t border-slate-100">
+                <td className="py-2 pr-3 font-semibold text-slate-800">{r.label}</td>
+                <td className="py-2 px-2 text-right text-slate-700">
+                  {r.baselineRatio.toFixed(1)}%
+                  <span className="ml-1 text-[11px] text-slate-400">({r.baselineCount})</span>
+                </td>
+                <td className="py-2 px-2 text-right text-slate-700">
+                  {r.segmentRatio.toFixed(1)}%
+                  <span className="ml-1 text-[11px] text-slate-400">({r.segmentCount})</span>
+                </td>
+                <td className="py-2 px-2 text-right font-extrabold text-slate-900">
+                  {r.diffPt > 0 ? "+" : ""}
+                  {r.diffPt.toFixed(1)}pt
+                </td>
+                <td className="py-2 pl-2 text-right text-slate-700">{r.segmentCount}</td>
+              </tr>
+            ))}
+            {items.length === 0 && (
+              <tr>
+                <td className="py-3 text-sm text-slate-500" colSpan={5}>
+                  データなし
+                </td>
+              </tr>
+            )}
+          </tbody>
+        </table>
+      </div>
+    </section>
+  );
+}
+
 function presetLabel(id: string) {
   switch (id) {
     case "thisMonth":
@@ -129,7 +202,6 @@ function presetLabel(id: string) {
 }
 
 function exclusiveToInclusiveDate(exclusiveYmd: string) {
-  // exclusive end (YYYY-MM-DD) の前日を inclusive 表示にする
   if (!exclusiveYmd || !/^\d{4}-\d{2}-\d{2}$/.test(exclusiveYmd)) return "";
   const dt = new Date(exclusiveYmd + "T00:00:00Z");
   if (Number.isNaN(dt.getTime())) return "";
@@ -138,7 +210,6 @@ function exclusiveToInclusiveDate(exclusiveYmd: string) {
 }
 
 function inclusiveToExclusiveDate(inclusiveYmd: string) {
-  // inclusive end (YYYY-MM-DD) を exclusive end にする（翌日）
   if (!inclusiveYmd || !/^\d{4}-\d{2}-\d{2}$/.test(inclusiveYmd)) return "";
   const dt = new Date(inclusiveYmd + "T00:00:00Z");
   if (Number.isNaN(dt.getTime())) return "";
@@ -147,47 +218,38 @@ function inclusiveToExclusiveDate(inclusiveYmd: string) {
 }
 
 export default function AdminCompare() {
-  // segment filters
   const [ageBand, setAgeBand] = useState("");
   const [gender, setGender] = useState("");
 
-  // token
   const [token, setToken] = useState("");
   const [tokenInput, setTokenInput] = useState("");
 
-  // period mode
   const [mode, setMode] = useState<"preset" | "manual">("preset");
 
-  // presets
   const [presetA, setPresetA] = useState<
     "thisMonth" | "lastMonth" | "last30d" | "thisFY" | "lastFY"
   >("thisMonth");
   const [presetB, setPresetB] = useState<"lastMonth" | "last30d" | "lastFY">("lastMonth");
   const [linkYoY, setLinkYoY] = useState(true);
 
-  // manual dates (YYYY-MM-DD) — toは「〜まで（inclusive）」
   const [fromA, setFromA] = useState("");
   const [toA, setToA] = useState("");
   const [fromB, setFromB] = useState("");
   const [toB, setToB] = useState("");
 
-  // view controls
   const [groupKey, setGroupKey] = useState<GroupKey>("residence");
   const [analysisMode, setAnalysisMode] = useState<"seg" | "period">("seg");
-  const [basis, setBasis] = useState<"baseline" | "segment">("baseline"); // period比較のときだけ有効
+  const [basis, setBasis] = useState<"baseline" | "segment">("baseline");
   const [segPeriod, setSegPeriod] = useState<"A" | "B">("A");
 
-  // data
   const [data, setData] = useState<CompareResponse | null>(null);
   const [loading, setLoading] = useState(false);
 
-  // 初回ロード時：localStorage から token を取得
   useEffect(() => {
     const saved = localStorage.getItem("admin_token") ?? "";
     setToken(saved);
   }, []);
 
-  // apply presets to manual dates
   useEffect(() => {
     if (mode !== "preset") return;
 
@@ -226,13 +288,11 @@ export default function AdminCompare() {
     const p = new URLSearchParams();
     if (token) p.set("token", token);
 
-    // compareと同じ期間
     if (fromA) p.set("fromA", fromA);
     if (toA) p.set("toA", toA);
     if (fromB) p.set("fromB", fromB);
     if (toB) p.set("toB", toB);
 
-    // セグ条件（diffに効く）
     if (ageBand) p.set("age_band", ageBand);
     if (gender) p.set("gender", gender);
 
@@ -262,6 +322,7 @@ export default function AdminCompare() {
           segmentTotal: 0,
           baselineGroups: {},
           segmentGroups: {},
+          diffs: {},
         },
         periodB: {
           from: fromB,
@@ -270,6 +331,7 @@ export default function AdminCompare() {
           segmentTotal: 0,
           baselineGroups: {},
           segmentGroups: {},
+          diffs: {},
         },
         error: "期間A/Bの from/to を指定してください",
       });
@@ -291,6 +353,7 @@ export default function AdminCompare() {
           segmentTotal: 0,
           baselineGroups: {},
           segmentGroups: {},
+          diffs: {},
         },
         periodB: {
           from: fromB,
@@ -299,6 +362,7 @@ export default function AdminCompare() {
           segmentTotal: 0,
           baselineGroups: {},
           segmentGroups: {},
+          diffs: {},
         },
         error: json?.error ?? `error (${res.status})`,
       });
@@ -310,7 +374,6 @@ export default function AdminCompare() {
     setLoading(false);
   }
 
-  // initial load once everything is ready
   useEffect(() => {
     if (!token) return;
     if (!fromA || !toA || !fromB || !toB) return;
@@ -361,7 +424,6 @@ export default function AdminCompare() {
     </main>
   );
 
-  // helpers to build dist from items
   function toDist(items: StatItem[]) {
     const d: Record<string, number> = {};
     for (const it of items) d[it.label] = it.count;
@@ -371,7 +433,6 @@ export default function AdminCompare() {
   const a = data?.periodA;
   const b = data?.periodB;
 
-  // === Mode 1: seg analysis (within one period) ===
   const segPack = segPeriod === "A" ? a : b;
   const segLeftItems = (segPack?.baselineGroups?.[groupKey] ?? []) as StatItem[];
   const segRightItems = (segPack?.segmentGroups?.[groupKey] ?? []) as StatItem[];
@@ -387,7 +448,6 @@ export default function AdminCompare() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [segPack, groupKey, segPeriod, data]);
 
-  // === Mode 2: period analysis (A vs B) ===
   const periodLeftPack = b;
   const periodRightPack = a;
 
@@ -411,7 +471,18 @@ export default function AdminCompare() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [data, groupKey, basis]);
 
-  // ---- 最終renderで出し分け（Hook順序を壊さない） ----
+  const segSummaryPack = segPeriod === "A" ? a : b;
+
+  const segSummaryList = useMemo(() => {
+    if (!segSummaryPack?.diffs) return [];
+
+    return GROUP_KEYS.map((key) => ({
+      key,
+      title: GROUP_TITLES[key],
+      items: (segSummaryPack.diffs[key] ?? []) as ApiDiffItem[],
+    }));
+  }, [segSummaryPack]);
+
   return !token ? (
     tokenRequiredView
   ) : (
@@ -522,12 +593,10 @@ export default function AdminCompare() {
               >
                 ログアウト
               </button>
-
             </div>
           </div>
         </header>
 
-        {/* controls */}
         <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm space-y-4">
           <div className="flex flex-wrap items-center gap-3">
             <div className="text-xs font-extrabold text-slate-700">期間モード</div>
@@ -641,7 +710,6 @@ export default function AdminCompare() {
             </div>
           )}
 
-          {/* Manual inputs */}
           <div className="grid gap-3 md:grid-cols-12">
             <div className="md:col-span-6">
               <div className="text-xs font-extrabold text-slate-700">期間A（手動）</div>
@@ -696,7 +764,6 @@ export default function AdminCompare() {
             </div>
           </div>
 
-          {/* KPI row */}
           <div className="flex flex-wrap gap-3 items-center">
             <Kpi label="期間A：全体n" value={data?.periodA?.baselineTotal ?? "-"} />
             <Kpi label="期間A：セグn" value={data?.periodA?.segmentTotal ?? "-"} />
@@ -711,7 +778,6 @@ export default function AdminCompare() {
           </div>
         </section>
 
-        {/* analysis controls */}
         <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
           <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
             <div className="flex flex-wrap items-center gap-2">
@@ -820,13 +886,37 @@ export default function AdminCompare() {
         </section>
 
         {analysisMode === "seg" ? (
-          <DiffTable
-            title={`${segPeriod === "A" ? "期間A" : "期間B"}：${GROUP_TITLES[groupKey]}（全体 vs セグ）`}
-            subtitle={`左=全体 / 右=${
-              ageBand || gender ? `${ageBand || ""}${gender || ""}` : "（全体）"
-            }（※セグ未指定なら同じ）`}
-            rows={segRows}
-          />
+          <div className="space-y-6">
+            <DiffTable
+              title={`${segPeriod === "A" ? "期間A" : "期間B"}：${GROUP_TITLES[groupKey]}（全体 vs セグ）`}
+              subtitle={`左=全体 / 右=${
+                ageBand || gender ? `${ageBand || ""}${gender || ""}` : "（全体）"
+              }（※セグ未指定なら同じ）`}
+              rows={segRows}
+            />
+
+            <section className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+              <div className="flex flex-wrap items-center gap-3">
+                <div className="text-sm font-extrabold text-slate-900">差分ランキングサマリー</div>
+                <div className="text-xs text-slate-600">
+                  対象={segPeriod === "A" ? "期間A" : "期間B"} / セグ=
+                  {ageBand || gender ? `${ageBand || ""}${gender || ""}` : "未指定"}
+                </div>
+                <div className="text-xs text-slate-600">n={segSummaryPack?.segmentTotal ?? 0}</div>
+                {(segSummaryPack?.segmentTotal ?? 0) < 10 && (
+                  <div className="rounded-lg bg-amber-100 px-2 py-1 text-xs font-bold text-amber-800">
+                    参考値（n&lt;10）
+                  </div>
+                )}
+              </div>
+            </section>
+
+            <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+              {segSummaryList.map((g) => (
+                <DiffSummaryCard key={g.key} title={g.title} items={g.items} />
+              ))}
+            </div>
+          </div>
         ) : (
           <DiffTable
             title={`${GROUP_TITLES[groupKey]}（期間A vs 期間B）`}
