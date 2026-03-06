@@ -63,15 +63,18 @@ export async function GET(req: Request) {
   try {
     const url = new URL(req.url);
 
-    // 認証は trim して比較（Vercel環境変数の末尾空白/改行対策）
     const token = (url.searchParams.get("token") || "").trim();
     const adminToken = (process.env.ADMIN_TOKEN || "").trim();
 
+    const tokenCodes = token.split("").map((c) => c.charCodeAt(0));
+    const envCodes = adminToken.split("").map((c) => c.charCodeAt(0));
+
     console.log("COMPARE auth check", {
       tokenLength: token.length,
-      envExists: !!process.env.ADMIN_TOKEN,
       envLength: adminToken.length,
       same: token === adminToken,
+      tokenCodes,
+      envCodes,
     });
 
     if (adminToken && token !== adminToken) {
@@ -83,13 +86,14 @@ export async function GET(req: Request) {
             envExists: !!process.env.ADMIN_TOKEN,
             envLength: adminToken.length,
             same: token === adminToken,
+            tokenCodes,
+            envCodes,
           },
         },
         { status: 401 }
       );
     }
 
-    // 期間A/B（YYYY-MM-DD, inclusive）
     const fromA = assertYmd(url.searchParams.get("fromA"), "fromA");
     const toA = assertYmd(url.searchParams.get("toA"), "toA");
     const fromB = assertYmd(url.searchParams.get("fromB"), "fromB");
@@ -111,11 +115,9 @@ export async function GET(req: Request) {
       gender: gender || undefined,
     };
 
-    // Period A
     const aBaselineRows = await fetchRows(supabase, fromA, toA);
     const aSegmentRows = age_band || gender ? await fetchRows(supabase, fromA, toA, seg) : aBaselineRows;
 
-    // Period B
     const bBaselineRows = await fetchRows(supabase, fromB, toB);
     const bSegmentRows = age_band || gender ? await fetchRows(supabase, fromB, toB, seg) : bBaselineRows;
 
