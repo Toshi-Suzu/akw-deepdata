@@ -5,6 +5,18 @@ import { GROUP_KEYS, type GroupKey } from "@/app/questions";
 type StatItem = { label: string; count: number };
 type Groups = Record<string, StatItem[]>;
 
+type DiffItem = {
+  groupKey: GroupKey;
+  label: string;
+  baselineCount: number;
+  baselineRatio: number;
+  segmentCount: number;
+  segmentRatio: number;
+  diffPt: number;
+};
+
+type Diffs = Record<string, DiffItem[]>;
+
 function countBy(rows: any[], key: GroupKey): StatItem[] {
   const m = new Map<string, number>();
   for (const r of rows) {
@@ -20,6 +32,55 @@ function groupsFor(rows: any[]): Groups {
   const groups: Groups = {};
   for (const k of GROUP_KEYS) groups[k] = countBy(rows, k);
   return groups;
+}
+
+function buildDiffs(baselineRows: any[], segmentRows: any[]): Diffs {
+  const result: Diffs = {};
+
+  const baselineGroups = groupsFor(baselineRows);
+  const segmentGroups = groupsFor(segmentRows);
+
+  const baselineTotal = baselineRows.length;
+  const segmentTotal = segmentRows.length;
+
+  for (const key of GROUP_KEYS) {
+    const baseItems = baselineGroups[key] ?? [];
+    const segItems = segmentGroups[key] ?? [];
+
+    const labelSet = new Set<string>([
+      ...baseItems.map((x) => x.label),
+      ...segItems.map((x) => x.label),
+    ]);
+
+    const baseMap = new Map(baseItems.map((x) => [x.label, x.count]));
+    const segMap = new Map(segItems.map((x) => [x.label, x.count]));
+
+    result[key] = [...labelSet]
+      .map((label) => {
+        const baselineCount = baseMap.get(label) ?? 0;
+        const segmentCount = segMap.get(label) ?? 0;
+
+        const baselineRatio =
+          baselineTotal > 0 ? (baselineCount / baselineTotal) * 100 : 0;
+        const segmentRatio =
+          segmentTotal > 0 ? (segmentCount / segmentTotal) * 100 : 0;
+
+        const diffPt = segmentRatio - baselineRatio;
+
+        return {
+          groupKey: key,
+          label,
+          baselineCount,
+          baselineRatio: Number(baselineRatio.toFixed(1)),
+          segmentCount,
+          segmentRatio: Number(segmentRatio.toFixed(1)),
+          diffPt: Number(diffPt.toFixed(1)),
+        };
+      })
+      .sort((a, b) => Math.abs(b.diffPt) - Math.abs(a.diffPt));
+  }
+
+  return result;
 }
 
 function assertYmd(x: string | null, name: string): string {
@@ -131,6 +192,7 @@ export async function GET(req: Request) {
         segmentTotal: aSegmentRows.length,
         baselineGroups: groupsFor(aBaselineRows),
         segmentGroups: groupsFor(aSegmentRows),
+        diffs: buildDiffs(aBaselineRows, aSegmentRows),
       },
       periodB: {
         from: fromB,
@@ -139,6 +201,7 @@ export async function GET(req: Request) {
         segmentTotal: bSegmentRows.length,
         baselineGroups: groupsFor(bBaselineRows),
         segmentGroups: groupsFor(bSegmentRows),
+        diffs: buildDiffs(bBaselineRows, bSegmentRows),
       },
     });
   } catch (e: any) {
