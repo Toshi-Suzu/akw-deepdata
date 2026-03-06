@@ -22,30 +22,10 @@ function groupsFor(rows: any[]): Groups {
   return groups;
 }
 
-// JSTのYYYY-MM-DDを「その日のJST 00:00」をUTCのISOに変換
-function jstDayStartToUtcIso(ymd: string): string {
-  const [y, m, d] = ymd.split("-").map(Number);
-  // JST 00:00 = UTC 前日15:00
-  const utc = new Date(Date.UTC(y, m - 1, d, -9, 0, 0));
-  return utc.toISOString();
-}
-
 function assertYmd(x: string | null, name: string): string {
   if (!x) throw new Error(`${name} is required`);
   if (!/^\d{4}-\d{2}-\d{2}$/.test(x)) throw new Error(`${name} must be YYYY-MM-DD`);
   return x;
-}
-
-// to は「含む」ではなく「除外（exclusive）」で扱う： [from, to)
-function toExclusiveUtcIso(fromYmd: string, toYmd: string): { fromIso: string; toIso: string } {
-  const fromIso = jstDayStartToUtcIso(fromYmd);
-
-  // toYmd の翌日JST 00:00 を exclusive end にする
-  const [y, m, d] = toYmd.split("-").map(Number);
-  const next = new Date(Date.UTC(y, m - 1, d + 1, -9, 0, 0));
-  const toIso = next.toISOString();
-
-  return { fromIso, toIso };
 }
 
 async function fetchRows(
@@ -71,7 +51,8 @@ async function fetchRows(
     fromYmd,
     toYmd,
     seg,
-    rows: data?.length
+    rows: data?.length ?? 0,
+    error: error?.message ?? null,
   });
 
   if (error) throw new Error(error.message);
@@ -82,37 +63,61 @@ export async function GET(req: Request) {
   try {
     const url = new URL(req.url);
 
-    const token = url.searchParams.get("token") || "";
-    if (process.env.ADMIN_TOKEN && token !== process.env.ADMIN_TOKEN) {
-      return NextResponse.json({ error: "unauthorized" }, { status: 401 });
+    // 認証は trim して比較（Vercel環境変数の末尾空白/改行対策）
+    const token = (url.searchParams.get("token") || "").trim();
+    const adminToken = (process.env.ADMIN_TOKEN || "").trim();
+
+    console.log("COMPARE auth check", {
+      tokenLength: token.length,
+      envExists: !!process.env.ADMIN_TOKEN,
+      envLength: adminToken.length,
+      same: token === adminToken,
+    });
+
+    if (adminToken && token !== adminToken) {
+      return NextResponse.json(
+        {
+          error: "unauthorized",
+          debug: {
+            tokenLength: token.length,
+            envExists: !!process.env.ADMIN_TOKEN,
+            envLength: adminToken.length,
+            same: token === adminToken,
+          },
+        },
+        { status: 401 }
+      );
     }
 
-    // 期間A/B（YYYY-MM-DD）
+    // 期間A/B（YYYY-MM-DD, inclusive）
     const fromA = assertYmd(url.searchParams.get("fromA"), "fromA");
     const toA = assertYmd(url.searchParams.get("toA"), "toA");
     const fromB = assertYmd(url.searchParams.get("fromB"), "fromB");
     const toB = assertYmd(url.searchParams.get("toB"), "toB");
 
-    if (toA <= fromA) throw new Error("toA must be greater than fromA");
-    if (toB <= fromB) throw new Error("toB must be greater than fromB");
+    if (toA < fromA) throw new Error("toA must be greater than or equal to fromA");
+    if (toB < fromB) throw new Error("toB must be greater than or equal to fromB");
 
-    const age_band = url.searchParams.get("age_band") || "";
-    const gender = url.searchParams.get("gender") || "";
+    const age_band = (url.searchParams.get("age_band") || "").trim();
+    const gender = (url.searchParams.get("gender") || "").trim();
 
     const supabase = createClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
       process.env.SUPABASE_SERVICE_ROLE_KEY!
     );
 
-    const seg = { age_band: age_band || undefined, gender: gender || undefined };
+    const seg = {
+      age_band: age_band || undefined,
+      gender: gender || undefined,
+    };
 
     // Period A
     const aBaselineRows = await fetchRows(supabase, fromA, toA);
-    const aSegmentRows = (age_band || gender) ? await fetchRows(supabase, fromA, toA, seg) : aBaselineRows;
+    const aSegmentRows = age_band || gender ? await fetchRows(supabase, fromA, toA, seg) : aBaselineRows;
 
     // Period B
     const bBaselineRows = await fetchRows(supabase, fromB, toB);
-    const bSegmentRows = (age_band || gender) ? await fetchRows(supabase, fromB, toB, seg) : bBaselineRows;
+    const bSegmentRows = age_band || gender ? await fetchRows(supabase, fromB, toB, seg) : bBaselineRows;
 
     return NextResponse.json({
       ok: true,
@@ -135,6 +140,13 @@ export async function GET(req: Request) {
       },
     });
   } catch (e: any) {
-    return NextResponse.json({ error: e?.message ?? "bad request" }, { status: 400 });
+    console.log("COMPARE route error", {
+      message: e?.message ?? "bad request",
+    });
+
+    return NextResponse.json(
+      { error: e?.message ?? "bad request" },
+      { status: 400 }
+    );
   }
 }
