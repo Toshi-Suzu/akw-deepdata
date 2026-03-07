@@ -68,7 +68,8 @@ export default function Home() {
   const steps: Step[] = useMemo(() => {
     const s = [...BASE_STEPS];
     if (needsChildAgeStep) {
-      s.push({
+      const childWithIndex = s.findIndex((step) => step.key === "child_with");
+      s.splice(childWithIndex + 1, 0, {
         key: "child_age_band",
         title: "同伴しているお子さまの年齢",
         description: "お子さま（18歳未満）を同伴している場合のみご回答ください",
