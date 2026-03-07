@@ -177,6 +177,14 @@ export const BASE_STEPS: Step[] = [
   },
 ];
 
+export const CHILD_AGE_STEP: Step = {
+  key: "child_age_band",
+  title: "同伴しているお子さまの年齢を教えてください。",
+  description: "お子さま（18歳未満）を同伴している場合のみご回答ください。",
+  options: OPTIONS.child_age_band,
+  required: true,
+};
+
 // ----------------------
 // admin集計の順序/見出し
 // ----------------------

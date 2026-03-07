@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { BASE_STEPS, OPTIONS, type Step, type StepKey } from "@/app/questions";
+import { BASE_STEPS, CHILD_AGE_STEP, type Step, type StepKey } from "@/app/questions";
 
 type FormState = {
   age_band: string;
@@ -69,13 +69,7 @@ export default function Home() {
     const s = [...BASE_STEPS];
     if (needsChildAgeStep) {
       const childWithIndex = s.findIndex((step) => step.key === "child_with");
-      s.splice(childWithIndex + 1, 0, {
-        key: "child_age_band",
-        title: "同伴しているお子さまの年齢",
-        description: "お子さま（18歳未満）を同伴している場合のみご回答ください",
-        options: OPTIONS.child_age_band,
-        required: true,
-      });
+      s.splice(childWithIndex + 1, 0, CHILD_AGE_STEP);
     }
     return s;
   }, [needsChildAgeStep]);
