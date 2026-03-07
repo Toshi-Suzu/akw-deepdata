@@ -165,9 +165,6 @@ export default function Home() {
       <div className="mx-auto w-full max-w-xl">
         <header className="mb-5">
           <div className="flex items-center gap-3">
-            // <span className="rounded-full border border-indigo-200 bg-indigo-50 px-3 py-1 text-xs font-bold text-indigo-700">
-              // 匿名・ログイン不要
-            // </span>
             <h1 className="text-xl font-extrabold tracking-tight text-slate-900">
               名古屋港水族館 来館アンケート
             </h1>
