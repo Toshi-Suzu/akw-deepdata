@@ -165,15 +165,15 @@ export default function Home() {
       <div className="mx-auto w-full max-w-xl">
         <header className="mb-5">
           <div className="flex items-center gap-3">
-            <span className="rounded-full border border-indigo-200 bg-indigo-50 px-3 py-1 text-xs font-bold text-indigo-700">
-              匿名・ログイン不要
-            </span>
+            //<span className="rounded-full border border-indigo-200 bg-indigo-50 px-3 py-1 text-xs font-bold text-indigo-700">
+              //匿名・ログイン不要
+            //</span>
             <h1 className="text-xl font-extrabold tracking-tight text-slate-900">
-              DeepData（来館者データ収集）
+              名古屋港水族館 来館アンケート
             </h1>
           </div>
           <p className="mt-2 text-sm leading-relaxed text-slate-600">
-            設問は最小限です（約30秒）。個人を特定する情報は収集しません。
+            設問は最小限です（約1分）。個人を特定する情報は収集しません。
           </p>
 
           <div className="mt-4">
