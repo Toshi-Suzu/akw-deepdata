@@ -130,48 +130,48 @@ export const OPTIONS: Record<StepKey, Option[]> = {
 // ステップ順
 // ----------------------
 export const BASE_STEPS: Step[] = [
-  { key: "age_band", title: "年代", options: OPTIONS.age_band, required: true },
-  { key: "gender", title: "性別", options: OPTIONS.gender, required: true },
+  { key: "age_band", title: "あなたの年代を教えてください。", options: OPTIONS.age_band, required: true },
+  { key: "gender", title: "性別を教えてください。", options: OPTIONS.gender, required: true },
   {
     key: "residence",
-    title: "居住エリア",
+    title: "お住まいの地域を教えてください。",
     description: "分析の精度が上がります（個人特定には使いません）",
     options: OPTIONS.residence,
     required: true,
   },
   {
     key: "companion_type",
-    title: "今回、どなたと来館されましたか",
+    title: "今回はどなたと来館しましたか？",
     options: OPTIONS.companion_type,
     required: true,
   },
   {
     key: "child_with",
-    title: "今回のご来館では、保護者としてお子さま（18歳未満）を同伴していますか",
+    title: "今回のご来館では、保護者としてお子さま（18歳未満）を同伴していますか？",
     options: OPTIONS.child_with,
     required: true,
   },
   {
     key: "visit_frequency",
-    title: "来館頻度",
+    title: "名古屋港水族館にはどのくらいの頻度で来館しますか？",
     options: OPTIONS.visit_frequency,
     required: true,
   },
   {
     key: "trigger",
-    title: "今回、来館しようと思った一番の理由は何ですか",
+    title: "今回、来館しようと思った一番の理由は何ですか？",
     options: OPTIONS.trigger,
     required: true,
   },
   {
     key: "info_source",
-    title: "名古屋港水族館の情報をどこで見聞きしましたか",
+    title: "名古屋港水族館の情報をどこで知りましたか？",
     options: OPTIONS.info_source,
     required: true,
   },
   {
     key: "top_interest",
-    title: "一番見たかった展示",
+    title: "今回一番楽しみにしていた展示は何ですか？",
     options: OPTIONS.top_interest,
     required: true,
   },
