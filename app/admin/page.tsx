@@ -907,11 +907,20 @@ export default function AdminCompare() {
               </div>
             </section>
 
-            <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-              {segSummaryList.map((g) => (
-                <DiffSummaryCard key={g.key} title={g.title} items={g.items} />
-              ))}
-            </div>
+            <details className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+              <summary className="cursor-pointer text-sm font-extrabold text-slate-900">
+                項目別差分を見る
+              </summary>
+              <p className="mt-2 text-xs text-slate-600">
+                居住地・同伴・子ども同伴・来館頻度・きっかけ・情報源など、設問ごとの上位差分を表示します。
+              </p>
+
+              <div className="mt-4 grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+                {segSummaryList.map((g) => (
+                  <DiffSummaryCard key={g.key} title={g.title} items={g.items} />
+                ))}
+              </div>
+            </details>
           </div>
         ) : (
           <DiffTable
