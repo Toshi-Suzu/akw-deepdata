@@ -36,7 +36,6 @@ export const QUESTION_VERSION = "v2026-03-07";
 // ----------------------
 // 選択肢
 // ----------------------
-
 export const OPTIONS: Record<StepKey, Option[]> = {
   age_band: [
     { value: "10代", label: "10代" },
@@ -130,12 +129,9 @@ export const OPTIONS: Record<StepKey, Option[]> = {
 // ----------------------
 // ステップ順
 // ----------------------
-
 export const BASE_STEPS: Step[] = [
   { key: "age_band", title: "年代", options: OPTIONS.age_band, required: true },
-
   { key: "gender", title: "性別", options: OPTIONS.gender, required: true },
-
   {
     key: "residence",
     title: "居住エリア",
@@ -143,42 +139,36 @@ export const BASE_STEPS: Step[] = [
     options: OPTIONS.residence,
     required: true,
   },
-
   {
     key: "companion_type",
     title: "今回、どなたと来館されましたか",
     options: OPTIONS.companion_type,
     required: true,
   },
-
   {
     key: "child_with",
     title: "今回のご来館では、保護者としてお子さま（18歳未満）を同伴していますか",
     options: OPTIONS.child_with,
     required: true,
   },
-
   {
     key: "visit_frequency",
     title: "来館頻度",
     options: OPTIONS.visit_frequency,
     required: true,
   },
-
   {
     key: "trigger",
     title: "今回、来館しようと思った一番の理由は何ですか",
     options: OPTIONS.trigger,
     required: true,
   },
-
   {
     key: "info_source",
     title: "名古屋港水族館の情報をどこで見聞きしましたか",
     options: OPTIONS.info_source,
     required: true,
   },
-
   {
     key: "top_interest",
     title: "一番見たかった展示",
@@ -186,3 +176,46 @@ export const BASE_STEPS: Step[] = [
     required: true,
   },
 ];
+
+// ----------------------
+// admin集計の順序/見出し
+// ----------------------
+export const GROUP_KEYS: GroupKey[] = [
+  "residence",
+  "companion_type",
+  "child_with",
+  "child_age_band",
+  "visit_frequency",
+  "trigger",
+  "info_source",
+  "top_interest",
+];
+
+export const GROUP_TITLES: Record<GroupKey, string> = {
+  residence: "居住地（residence）",
+  companion_type: "同伴（companion_type）",
+  child_with: "子ども同伴（child_with）",
+  child_age_band: "子どもの年齢（child_age_band）",
+  visit_frequency: "来館頻度（visit_frequency）",
+  trigger: "きっかけ（trigger）",
+  info_source: "情報源（info_source）",
+  top_interest: "見たかった展示（top_interest）",
+};
+
+// ----------------------
+// APIバリデーション用
+// ----------------------
+const values = (k: StepKey) => OPTIONS[k].map((o) => o.value) as readonly string[];
+
+export const ALLOWED = {
+  age_band: values("age_band"),
+  gender: values("gender"),
+  residence: values("residence"),
+  companion_type: values("companion_type"),
+  child_with: values("child_with"),
+  child_age_band: values("child_age_band"),
+  visit_frequency: values("visit_frequency"),
+  trigger: values("trigger"),
+  info_source: values("info_source"),
+  top_interest: values("top_interest"),
+} as const;
