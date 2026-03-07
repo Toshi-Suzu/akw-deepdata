@@ -528,11 +528,28 @@ export default function AdminCompare() {
               {loading ? "集計中…" : "更新"}
             </button>
 
-          <details className="mt-4">
-            <summary className="cursor-pointer text-sm font-bold text-slate-700">
+            <button
+              className="rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-bold text-slate-700 hover:bg-slate-50"
+              onClick={() => {
+                localStorage.removeItem("admin_token");
+                location.reload();
+              }}
+            >
+              ログアウト
+            </button>
+          </div>
+        </header>
+
+        <section className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+          <details>
+            <summary className="cursor-pointer text-sm font-extrabold text-slate-900">
               CSV出力
             </summary>
-            <div className="flex flex-wrap gap-2">
+            <p className="mt-2 text-xs text-slate-600">
+              行データ、全体vsセグ差分、期間比較差分をCSVで出力します。
+            </p>
+
+            <div className="mt-4 flex flex-wrap gap-2">
               <button
                 className="rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-bold text-slate-700 hover:bg-slate-50"
                 onClick={() => downloadCsv({ type: "rows", period: "A" })}
@@ -578,20 +595,9 @@ export default function AdminCompare() {
               >
                 差分CSV（A vs B：セグ）
               </button>
-
             </div>
           </details>
-              <button
-                className="rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-bold text-slate-700 hover:bg-slate-50"
-                onClick={() => {
-                  localStorage.removeItem("admin_token");
-                  location.reload();
-                }}
-              >
-                ログアウト
-              </button>
-          </div>
-        </header>
+        </section>
 
         <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm space-y-4">
           <div className="flex flex-wrap items-center gap-3">
