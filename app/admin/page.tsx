@@ -497,15 +497,6 @@ export default function AdminCompare() {
           </div>
 
           <div className="flex flex-wrap gap-2">
-            <button
-              className="rounded-xl bg-slate-900 px-4 py-2 text-sm font-extrabold text-white hover:bg-slate-800"
-              onClick={() => {
-                setAgeBand("30代");
-                setGender("女性");
-              }}
-            >
-              30代女性
-            </button>
 
             <button
               className="rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-bold text-slate-700 hover:bg-slate-50"
@@ -537,6 +528,10 @@ export default function AdminCompare() {
               {loading ? "集計中…" : "更新"}
             </button>
 
+          <details className="mt-4">
+            <summary className="cursor-pointer text-sm font-bold text-slate-700">
+              CSV出力
+            </summary>
             <div className="flex flex-wrap gap-2">
               <button
                 className="rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-bold text-slate-700 hover:bg-slate-50"
@@ -584,6 +579,8 @@ export default function AdminCompare() {
                 差分CSV（A vs B：セグ）
               </button>
 
+            </div>
+          </details>
               <button
                 className="rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-bold text-slate-700 hover:bg-slate-50"
                 onClick={() => {
@@ -593,7 +590,6 @@ export default function AdminCompare() {
               >
                 ログアウト
               </button>
-            </div>
           </div>
         </header>
 
