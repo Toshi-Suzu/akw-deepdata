@@ -10,6 +10,7 @@ export type StepKey =
   | "trigger"
   | "info_source"
   | "top_interest"
+  | "child_with"
   | "child_age_band";
 
 export type Step = {
@@ -27,9 +28,10 @@ export type GroupKey =
   | "trigger"
   | "info_source"
   | "top_interest"
+  | "child_with"
   | "child_age_band";
 
-export const QUESTION_VERSION = "v2026-03-04"; // 変更したら更新（任意）
+export const QUESTION_VERSION = "v2026-03-07";
 
 // --- フォーム表示用（labelは変更OK、valueは原則固定） ---
 export const OPTIONS: Record<StepKey, Option[]> = {
@@ -98,10 +100,17 @@ export const OPTIONS: Record<StepKey, Option[]> = {
     { value: "深海", label: "深海" },
     { value: "特にない", label: "特にない" },
   ],
+  child_with: [
+    { value: "はい", label: "はい" },
+    { value: "いいえ", label: "いいえ" },
+  ],
   child_age_band: [
     { value: "0〜3歳", label: "0〜3歳" },
     { value: "4〜6歳", label: "4〜6歳" },
     { value: "小学生", label: "小学生" },
+    { value: "中学生以上", label: "中学生以上" },
+    { value: "複数いる／幅広い", label: "複数いる／幅広い" },
+    { value: "回答しない", label: "回答しない" },
   ],
 };
 
@@ -121,6 +130,12 @@ export const BASE_STEPS: Step[] = [
   { key: "trigger", title: "来館のきっかけ", options: OPTIONS.trigger, required: true },
   { key: "info_source", title: "情報を知った場所", options: OPTIONS.info_source, required: true },
   { key: "top_interest", title: "一番見たかった展示", options: OPTIONS.top_interest, required: true },
+  {
+    key: "child_with",
+    title: "今回のご来館では、お子さま（18歳未満）を同伴していますか",
+    options: OPTIONS.child_with,
+    required: true,
+  },
 ];
 
 // --- admin集計の順序/見出し ---
@@ -131,6 +146,7 @@ export const GROUP_KEYS: GroupKey[] = [
   "trigger",
   "info_source",
   "top_interest",
+  "child_with",
   "child_age_band",
 ];
 
@@ -141,6 +157,7 @@ export const GROUP_TITLES: Record<GroupKey, string> = {
   trigger: "きっかけ（trigger）",
   info_source: "情報源（info_source）",
   top_interest: "見たかった展示（top_interest）",
+  child_with: "子ども同伴（child_with）",
   child_age_band: "子どもの年齢（child_age_band）",
 };
 
@@ -156,5 +173,6 @@ export const ALLOWED = {
   trigger: values("trigger"),
   info_source: values("info_source"),
   top_interest: values("top_interest"),
+  child_with: values("child_with"),
   child_age_band: values("child_age_band"),
 } as const;

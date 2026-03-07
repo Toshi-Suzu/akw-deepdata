@@ -12,6 +12,7 @@ type FormState = {
   trigger: string;
   info_source: string;
   top_interest: string;
+  child_with: string;
   child_age_band?: string;
 };
 
@@ -45,6 +46,7 @@ export default function Home() {
     trigger: "",
     info_source: "",
     top_interest: "",
+    child_with: "",
     child_age_band: "",
   });
 
@@ -54,25 +56,22 @@ export default function Home() {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const [alreadyAnswered, setAlreadyAnswered] = useState(false);
-  const [editMode, setEditMode] = useState(false); // ★追加：修正モード
+  const [editMode, setEditMode] = useState(false);
 
   useEffect(() => {
     const saved = localStorage.getItem("akw_answered_visit_key");
     if (saved === getVisitKeyJST()) setAlreadyAnswered(true);
   }, []);
 
-  const needsChildAgeStep =
-    form.age_band === "30代" &&
-    form.gender === "女性" &&
-    (form.companion_type === "小学生以下の子どもと" || form.companion_type === "中高生の子どもと");
+  const needsChildAgeStep = form.child_with === "はい";
 
   const steps: Step[] = useMemo(() => {
     const s = [...BASE_STEPS];
     if (needsChildAgeStep) {
-      s.splice(4, 0, {
+      s.push({
         key: "child_age_band",
-        title: "（追加）お子さまの年齢",
-        description: "30代女性 × 親子の場合のみ表示されます",
+        title: "同伴しているお子さまの年齢",
+        description: "お子さま（18歳未満）を同伴している場合のみご回答ください",
         options: OPTIONS.child_age_band,
         required: true,
       });
@@ -90,7 +89,17 @@ export default function Home() {
   }, [current.required, currentValue]);
 
   function setAnswer(stepKey: StepKey, value: string) {
-    setForm((prev) => ({ ...prev, [stepKey]: value }));
+    setForm((prev) => {
+      const next = { ...prev, [stepKey]: value };
+
+      // 子ども同伴なしに変えたら年齢はクリア
+      if (stepKey === "child_with" && value !== "はい") {
+        next.child_age_band = "";
+      }
+
+      return next;
+    });
+
     setMsg(null);
     setIsError(false);
   }
@@ -115,7 +124,10 @@ export default function Home() {
       ...form,
       respondent_id: getRespondentId(),
       visit_key: getVisitKeyJST(),
+      child_with: form.child_with || "",
+      child_age_band: form.child_with === "はい" ? form.child_age_band || "" : "",
     };
+
     if (!needsChildAgeStep) delete payload.child_age_band;
 
     try {
@@ -131,12 +143,11 @@ export default function Home() {
         setMsg(data.error ?? "送信に失敗しました");
       } else {
         setIsError(false);
-        // ★修正モードかどうかで文言だけ変える（DBはupsertなのでどちらもOK）
         setMsg(editMode ? "修正内容を保存しました（上書きOK）" : "送信しました（ご協力ありがとうございました）");
 
         localStorage.setItem("akw_answered_visit_key", getVisitKeyJST());
         setAlreadyAnswered(true);
-        setEditMode(false); // ★送信後は修正モード解除
+        setEditMode(false);
       }
     } catch {
       setIsError(true);
@@ -179,7 +190,6 @@ export default function Home() {
             </div>
           </div>
 
-          {/* ★追加：本日回答済みバッジ */}
           {alreadyAnswered && !editMode && (
             <div className="mt-3 rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-xs font-bold text-amber-800">
               本日は回答済みです（誤入力があれば「回答を修正する」から上書きできます）
@@ -247,7 +257,6 @@ export default function Home() {
               <button
                 type="button"
                 onClick={submit}
-                // ★変更：回答済みでもeditModeなら送れる
                 disabled={!canGoNext || isSubmitting || (alreadyAnswered && !editMode)}
                 className="ml-auto rounded-xl bg-slate-900 px-5 py-3 text-sm font-extrabold text-white shadow-sm transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:bg-slate-400"
               >
@@ -273,7 +282,6 @@ export default function Home() {
             </div>
           )}
 
-          {/* ★追加：修正ボタン（回答済みのときだけ表示） */}
           {alreadyAnswered && !editMode && (
             <div className="mt-4 flex flex-wrap items-center gap-3">
               <button
@@ -293,7 +301,6 @@ export default function Home() {
             </div>
           )}
 
-          {/* ★追加：修正モード解除 */}
           {editMode && (
             <div className="mt-4 flex flex-wrap items-center gap-3">
               <button

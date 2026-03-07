@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
-import { ALLOWED as allowed } from "@/app/questions"; // ★追加：共通定義を読む
+import { ALLOWED as allowed } from "@/app/questions";
 
 function isAllowed<T extends readonly string[]>(arr: T, v: any): v is T[number] {
   return typeof v === "string" && (arr as readonly string[]).includes(v);
@@ -14,7 +14,6 @@ export async function POST(req: Request) {
   try {
     const body = await req.json();
 
-    // --- 一人一回答（同一端末×同一日）用の入力検証 ---
     if (!isNonEmptyString(body.respondent_id)) {
       return NextResponse.json({ error: "invalid respondent_id" }, { status: 400 });
     }
@@ -22,7 +21,6 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "invalid visit_key" }, { status: 400 });
     }
 
-    // 必須項目バリデーション（ホワイトリスト）
     if (!isAllowed(allowed.age_band, body.age_band)) {
       return NextResponse.json({ error: "invalid age_band" }, { status: 400 });
     }
@@ -47,12 +45,11 @@ export async function POST(req: Request) {
     if (!isAllowed(allowed.top_interest, body.top_interest)) {
       return NextResponse.json({ error: "invalid top_interest" }, { status: 400 });
     }
+    if (!isAllowed(allowed.child_with, body.child_with)) {
+      return NextResponse.json({ error: "invalid child_with" }, { status: 400 });
+    }
 
-    // 条件分岐項目
-    const needsChildAge =
-      body.age_band === "30代" &&
-      body.gender === "女性" &&
-      (body.companion_type === "小学生以下の子どもと" || body.companion_type === "中高生の子どもと");
+    const needsChildAge = body.child_with === "はい";
 
     if (needsChildAge) {
       if (!isAllowed(allowed.child_age_band, body.child_age_band)) {
@@ -65,7 +62,6 @@ export async function POST(req: Request) {
       process.env.SUPABASE_SERVICE_ROLE_KEY!
     );
 
-    // ✅ insert → upsert（同一キーは更新）
     const row = {
       staff_email: null,
       respondent_id: body.respondent_id,
@@ -79,6 +75,7 @@ export async function POST(req: Request) {
       trigger: body.trigger,
       info_source: body.info_source,
       top_interest: body.top_interest,
+      child_with: body.child_with,
       child_age_band: needsChildAge ? body.child_age_band : null,
     };
 
