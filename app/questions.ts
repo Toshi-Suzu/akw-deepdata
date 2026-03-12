@@ -118,10 +118,13 @@ export const OPTIONS: Record<StepKey, Option[]> = {
   top_interest: [
     { value: "シャチ", label: "シャチ" },
     { value: "イルカ", label: "イルカ" },
-    { value: "ペンギン", label: "ペンギン" },
-    { value: "ウミガメ", label: "ウミガメ" },
-    { value: "サンゴ水槽", label: "サンゴ水槽" },
+    { value: "ベルーガ", label: "ベルーガ" },
+    { value: "黒潮大水槽", label: "黒潮大水槽" },
     { value: "深海", label: "深海" },
+    { value: "サンゴ水槽", label: "サンゴ水槽" },
+    { value: "ウミガメ", label: "ウミガメ" },
+    { value: "ペンギン", label: "ペンギン" },
+    { value: "くらげ", label: "くらげ" },
     { value: "特にない", label: "特にない" },
   ],
 };

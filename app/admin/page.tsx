@@ -225,14 +225,6 @@ function exclusiveToInclusiveDate(exclusiveYmd: string) {
   return dt.toISOString().slice(0, 10);
 }
 
-function inclusiveToExclusiveDate(inclusiveYmd: string) {
-  if (!inclusiveYmd || !/^\d{4}-\d{2}-\d{2}$/.test(inclusiveYmd)) return "";
-  const dt = new Date(inclusiveYmd + "T00:00:00Z");
-  if (Number.isNaN(dt.getTime())) return "";
-  dt.setUTCDate(dt.getUTCDate() + 1);
-  return dt.toISOString().slice(0, 10);
-}
-
 export default function AdminCompare() {
   const [ageBand, setAgeBand] = useState("");
   const [gender, setGender] = useState("");
@@ -290,9 +282,9 @@ export default function AdminCompare() {
     p.set("token", token);
 
     if (fromA) p.set("fromA", fromA);
-    if (toA) p.set("toA", inclusiveToExclusiveDate(toA));
+    if (toA) p.set("toA", toA);
     if (fromB) p.set("fromB", fromB);
-    if (toB) p.set("toB", inclusiveToExclusiveDate(toB));
+    if (toB) p.set("toB", toB);
 
     if (ageBand) p.set("age_band", ageBand);
     if (gender) p.set("gender", gender);
@@ -305,9 +297,9 @@ export default function AdminCompare() {
     if (token) p.set("token", token);
 
     if (fromA) p.set("fromA", fromA);
-    if (toA) p.set("toA", inclusiveToExclusiveDate(toA));
+    if (toA) p.set("toA", toA);
     if (fromB) p.set("fromB", fromB);
-    if (toB) p.set("toB", inclusiveToExclusiveDate(toB));
+    if (toB) p.set("toB", toB);
 
     if (ageBand) p.set("age_band", ageBand);
     if (gender) p.set("gender", gender);
