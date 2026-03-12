@@ -497,7 +497,6 @@ export default function AdminCompare() {
           </div>
 
           <div className="flex flex-wrap gap-2">
-
             <button
               className="rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-bold text-slate-700 hover:bg-slate-50"
               onClick={() => {
@@ -539,65 +538,6 @@ export default function AdminCompare() {
             </button>
           </div>
         </header>
-
-        <section className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
-          <details>
-            <summary className="cursor-pointer text-sm font-extrabold text-slate-900">
-              CSV出力
-            </summary>
-            <p className="mt-2 text-xs text-slate-600">
-              行データ、全体vsセグ差分、期間比較差分をCSVで出力します。
-            </p>
-
-            <div className="mt-4 flex flex-wrap gap-2">
-              <button
-                className="rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-bold text-slate-700 hover:bg-slate-50"
-                onClick={() => downloadCsv({ type: "rows", period: "A" })}
-              >
-                行CSV（期間A）
-              </button>
-
-              <button
-                className="rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-bold text-slate-700 hover:bg-slate-50"
-                onClick={() => downloadCsv({ type: "rows", period: "B" })}
-              >
-                行CSV（期間B）
-              </button>
-
-              <button
-                className="rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-bold text-slate-700 hover:bg-slate-50"
-                onClick={() => downloadCsv({ type: "diff", diff_mode: "seg", period: "A", group: "all" })}
-              >
-                差分CSV（全体vsセグ：A）
-              </button>
-
-              <button
-                className="rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-bold text-slate-700 hover:bg-slate-50"
-                onClick={() => downloadCsv({ type: "diff", diff_mode: "seg", period: "B", group: "all" })}
-              >
-                差分CSV（全体vsセグ：B）
-              </button>
-
-              <button
-                className="rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-bold text-slate-700 hover:bg-slate-50"
-                onClick={() =>
-                  downloadCsv({ type: "diff", diff_mode: "period", basis: "baseline", group: "all" })
-                }
-              >
-                差分CSV（A vs B：全体）
-              </button>
-
-              <button
-                className="rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-bold text-slate-700 hover:bg-slate-50"
-                onClick={() =>
-                  downloadCsv({ type: "diff", diff_mode: "period", basis: "segment", group: "all" })
-                }
-              >
-                差分CSV（A vs B：セグ）
-              </button>
-            </div>
-          </details>
-        </section>
 
         <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm space-y-4">
           <div className="flex flex-wrap items-center gap-3">
@@ -778,6 +718,26 @@ export default function AdminCompare() {
               </div>
             )}
           </div>
+
+          <div className="flex flex-wrap gap-2 pt-2 border-t border-slate-200">
+            <div className="text-xs font-bold text-slate-600 mr-2 self-center">
+              元データCSV
+            </div>
+
+            <button
+              className="rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-bold text-slate-700 hover:bg-slate-50"
+              onClick={() => downloadCsv({ type: "rows", period: "A" })}
+            >
+              期間A
+            </button>
+
+            <button
+              className="rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-bold text-slate-700 hover:bg-slate-50"
+              onClick={() => downloadCsv({ type: "rows", period: "B" })}
+            >
+              期間B
+            </button>
+          </div>
         </section>
 
         <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
@@ -897,6 +857,22 @@ export default function AdminCompare() {
               rows={segRows}
             />
 
+            <div className="flex flex-wrap gap-2">
+              <button
+                className="rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-bold text-slate-700 hover:bg-slate-50"
+                onClick={() =>
+                  downloadCsv({
+                    type: "diff",
+                    diff_mode: "seg",
+                    period: segPeriod,
+                    group: groupKey,
+                  })
+                }
+              >
+                この差分をCSV出力
+              </button>
+            </div>
+
             <section className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
               <div className="flex flex-wrap items-center gap-3">
                 <div className="text-sm font-extrabold text-slate-900">差分ランキングサマリー</div>
@@ -929,13 +905,31 @@ export default function AdminCompare() {
             </details>
           </div>
         ) : (
-          <DiffTable
-            title={`${GROUP_TITLES[groupKey]}（期間A vs 期間B）`}
-            subtitle={`左=期間B（${fromB}〜${toB}） / 右=期間A（${fromA}〜${toA}） / 基準=${
-              basis === "baseline" ? "全体" : "セグ"
-            }`}
-            rows={periodRows}
-          />
+          <div className="space-y-3">
+            <DiffTable
+              title={`${GROUP_TITLES[groupKey]}（期間A vs 期間B）`}
+              subtitle={`左=期間B（${fromB}〜${toB}） / 右=期間A（${fromA}〜${toA}） / 基準=${
+                basis === "baseline" ? "全体" : "セグ"
+              }`}
+              rows={periodRows}
+            />
+
+            <div className="flex flex-wrap gap-2">
+              <button
+                className="rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-bold text-slate-700 hover:bg-slate-50"
+                onClick={() =>
+                  downloadCsv({
+                    type: "diff",
+                    diff_mode: "period",
+                    basis,
+                    group: groupKey,
+                  })
+                }
+              >
+                この比較をCSV出力
+              </button>
+            </div>
+          </div>
         )}
       </div>
     </main>
