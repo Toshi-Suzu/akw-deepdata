@@ -718,26 +718,6 @@ export default function AdminCompare() {
               </div>
             )}
           </div>
-
-          <div className="flex flex-wrap gap-2 pt-2 border-t border-slate-200">
-            <div className="text-xs font-bold text-slate-600 mr-2 self-center">
-              元データCSV
-            </div>
-
-            <button
-              className="rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-bold text-slate-700 hover:bg-slate-50"
-              onClick={() => downloadCsv({ type: "rows", period: "A" })}
-            >
-              期間A
-            </button>
-
-            <button
-              className="rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-bold text-slate-700 hover:bg-slate-50"
-              onClick={() => downloadCsv({ type: "rows", period: "B" })}
-            >
-              期間B
-            </button>
-          </div>
         </section>
 
         <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
@@ -860,6 +840,20 @@ export default function AdminCompare() {
             <div className="flex flex-wrap gap-2">
               <button
                 className="rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-bold text-slate-700 hover:bg-slate-50"
+                onClick={() => downloadCsv({ type: "rows", period: "A" })}
+              >
+                期間Aの元データCSV
+              </button>
+
+              <button
+                className="rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-bold text-slate-700 hover:bg-slate-50"
+                onClick={() => downloadCsv({ type: "rows", period: "B" })}
+              >
+                期間Bの元データCSV
+              </button>
+
+              <button
+                className="rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-bold text-slate-700 hover:bg-slate-50"
                 onClick={() =>
                   downloadCsv({
                     type: "diff",
@@ -915,6 +909,20 @@ export default function AdminCompare() {
             />
 
             <div className="flex flex-wrap gap-2">
+              <button
+                className="rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-bold text-slate-700 hover:bg-slate-50"
+                onClick={() => downloadCsv({ type: "rows", period: "A" })}
+              >
+                期間Aの元データCSV
+              </button>
+
+              <button
+                className="rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-bold text-slate-700 hover:bg-slate-50"
+                onClick={() => downloadCsv({ type: "rows", period: "B" })}
+              >
+                期間Bの元データCSV
+              </button>
+
               <button
                 className="rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-bold text-slate-700 hover:bg-slate-50"
                 onClick={() =>
