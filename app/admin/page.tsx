@@ -1065,8 +1065,9 @@ async function uploadWallpaper() {
         ローカル画像を選んでアップロードすると、回答完了画面の壁紙を切り替えます。
       </p>
       {currentWallpaperPath && (
-        <p className="mt-2 text-xs text-slate-600 break-all">
-          現在の画像: {currentWallpaperPath}
+        <p className="mt-2 text-xs text-slate-600">
+          現在の壁紙ファイル:
+        <span className="font-mono">{currentWallpaperPath}</span>
         </p>
       )}
     </div>
