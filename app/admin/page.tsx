@@ -41,8 +41,15 @@ type CompareResponse = {
 function pct(x: number) {
   return `${Math.round(x * 1000) / 10}%`;
 }
-function pp(x: number) {
-  return `${Math.round(x * 1000) / 10}pp`;
+
+function pt(x: number) {
+  const rounded = Math.round(x * 1000) / 10;
+  return `${rounded > 0 ? "+" : ""}${rounded}pt`;
+}
+
+function liftLabel(x: number | null) {
+  if (x === null || !Number.isFinite(x)) return "—";
+  return `${(Math.round(x * 100) / 100).toFixed(2)}倍`;
 }
 
 function Kpi({ label, value }: { label: string; value: any }) {
@@ -58,10 +65,16 @@ function DiffTable({
   title,
   subtitle,
   rows,
+  leftLabel,
+  rightLabel,
+  rightCountLabel,
 }: {
   title: string;
   subtitle?: string;
   rows: DiffRow[];
+  leftLabel: string;
+  rightLabel: string;
+  rightCountLabel: string;
 }) {
   return (
     <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
@@ -70,19 +83,22 @@ function DiffTable({
           <h3 className="text-sm font-extrabold text-slate-900">{title}</h3>
           {subtitle && <p className="mt-1 text-xs text-slate-600">{subtitle}</p>}
         </div>
-        <div className="text-[11px] text-slate-500">diff=right−left / lift=right÷left</div>
+      </div>
+
+      <div className="mt-2 rounded-xl bg-slate-50 px-3 py-2 text-[11px] text-slate-600">
+        差（pt）は割合の差です。偏り倍率は、右側が左側に対してどれくらい強く出ているかの目安です。
       </div>
 
       <div className="mt-3 overflow-auto">
-        <table className="min-w-[820px] w-full text-sm">
+        <table className="min-w-[900px] w-full text-sm">
           <thead>
             <tr className="text-xs text-slate-600">
               <th className="text-left py-2 pr-3">項目</th>
-              <th className="text-right py-2 px-2">左</th>
-              <th className="text-right py-2 px-2">右</th>
-              <th className="text-right py-2 px-2">差分</th>
-              <th className="text-right py-2 px-2">Lift</th>
-              <th className="text-right py-2 pl-2">n(右)</th>
+              <th className="text-right py-2 px-2">{leftLabel}</th>
+              <th className="text-right py-2 px-2">{rightLabel}</th>
+              <th className="text-right py-2 px-2">差（pt）</th>
+              <th className="text-right py-2 px-2">偏り倍率</th>
+              <th className="text-right py-2 pl-2">{rightCountLabel}</th>
             </tr>
           </thead>
           <tbody>
@@ -98,10 +114,10 @@ function DiffTable({
                   <span className="text-[11px] text-slate-400">({r.segmentCount})</span>
                 </td>
                 <td className="py-2 px-2 text-right font-extrabold text-slate-900">
-                  {pp(r.diff)}
+                  {pt(r.diff)}
                 </td>
                 <td className="py-2 px-2 text-right text-slate-700">
-                  {r.lift === null ? "-" : (Math.round(r.lift * 100) / 100).toFixed(2)}
+                  {liftLabel(r.lift)}
                 </td>
                 <td className="py-2 pl-2 text-right text-slate-700">{r.segmentCount}</td>
               </tr>
@@ -118,7 +134,7 @@ function DiffTable({
       </div>
 
       <p className="mt-2 text-[11px] text-slate-500">
-        ※ nが小さいと差分がブレます。目安：n≥30（最低でもn≥10）。
+        ※ 回答数が小さいと差分はブレやすくなります。目安：回答数30以上（最低でも10以上）。
       </p>
     </section>
   );
@@ -136,7 +152,7 @@ function DiffSummaryCard({
       <div className="flex items-end justify-between gap-3">
         <div>
           <h3 className="text-sm font-extrabold text-slate-900">{title}</h3>
-          <p className="mt-1 text-xs text-slate-600">全体→セグの差分が大きい順（pt）</p>
+          <p className="mt-1 text-xs text-slate-600">全体→セグの差が大きい順（pt）</p>
         </div>
       </div>
 
@@ -145,10 +161,10 @@ function DiffSummaryCard({
           <thead>
             <tr className="text-xs text-slate-600">
               <th className="text-left py-2 pr-3">カテゴリ</th>
-              <th className="text-right py-2 px-2">全体</th>
-              <th className="text-right py-2 px-2">セグ</th>
-              <th className="text-right py-2 px-2">差分</th>
-              <th className="text-right py-2 pl-2">n(セグ)</th>
+              <th className="text-right py-2 px-2">全体割合</th>
+              <th className="text-right py-2 px-2">セグ割合</th>
+              <th className="text-right py-2 px-2">差（pt）</th>
+              <th className="text-right py-2 pl-2">セグ回答数</th>
             </tr>
           </thead>
           <tbody>
@@ -274,9 +290,9 @@ export default function AdminCompare() {
     p.set("token", token);
 
     if (fromA) p.set("fromA", fromA);
-    if (toA) p.set("toA", toA);
+    if (toA) p.set("toA", inclusiveToExclusiveDate(toA));
     if (fromB) p.set("fromB", fromB);
-    if (toB) p.set("toB", toB);
+    if (toB) p.set("toB", inclusiveToExclusiveDate(toB));
 
     if (ageBand) p.set("age_band", ageBand);
     if (gender) p.set("gender", gender);
@@ -289,9 +305,9 @@ export default function AdminCompare() {
     if (token) p.set("token", token);
 
     if (fromA) p.set("fromA", fromA);
-    if (toA) p.set("toA", toA);
+    if (toA) p.set("toA", inclusiveToExclusiveDate(toA));
     if (fromB) p.set("fromB", fromB);
-    if (toB) p.set("toB", toB);
+    if (toB) p.set("toB", inclusiveToExclusiveDate(toB));
 
     if (ageBand) p.set("age_band", ageBand);
     if (gender) p.set("gender", gender);
@@ -482,6 +498,14 @@ export default function AdminCompare() {
       items: (segSummaryPack.diffs[key] ?? []) as ApiDiffItem[],
     }));
   }, [segSummaryPack]);
+
+  const segLeftLabel = "全体割合";
+  const segRightLabel = "セグ割合";
+  const segRightCountLabel = "セグ回答数";
+
+  const periodLeftLabel = basis === "baseline" ? "期間Bの全体割合" : "期間Bのセグ割合";
+  const periodRightLabel = basis === "baseline" ? "期間Aの全体割合" : "期間Aのセグ割合";
+  const periodRightCountLabel = basis === "baseline" ? "期間Aの全体回答数" : "期間Aのセグ回答数";
 
   return !token ? (
     tokenRequiredView
@@ -773,7 +797,7 @@ export default function AdminCompare() {
                 </div>
               ) : (
                 <div className="ml-2 flex items-center gap-2">
-                  <div className="text-xs font-bold text-slate-700">基準</div>
+                  <div className="text-xs font-bold text-slate-700">比較対象</div>
                   <button
                     className={`rounded-xl px-3 py-1.5 text-sm font-bold border ${
                       basis === "baseline"
@@ -823,7 +847,8 @@ export default function AdminCompare() {
           </div>
 
           <p className="mt-2 text-xs text-slate-600">
-            「期間A vs 期間B」は diffが <span className="font-bold">A−B</span>（Aで増えた/減った）が上に来ます。
+            「期間A vs 期間B」は、差（pt）が <span className="font-bold">期間A − 期間B</span>
+            になるよう表示しています。プラスなら期間Aの方が高く、マイナスなら期間Bの方が高いです。
           </p>
         </section>
 
@@ -835,6 +860,9 @@ export default function AdminCompare() {
                 ageBand || gender ? `${ageBand || ""}${gender || ""}` : "（全体）"
               }（※セグ未指定なら同じ）`}
               rows={segRows}
+              leftLabel={segLeftLabel}
+              rightLabel={segRightLabel}
+              rightCountLabel={segRightCountLabel}
             />
 
             <div className="flex flex-wrap gap-2">
@@ -902,10 +930,13 @@ export default function AdminCompare() {
           <div className="space-y-3">
             <DiffTable
               title={`${GROUP_TITLES[groupKey]}（期間A vs 期間B）`}
-              subtitle={`左=期間B（${fromB}〜${toB}） / 右=期間A（${fromA}〜${toA}） / 基準=${
+              subtitle={`左=期間B（${fromB}〜${toB}） / 右=期間A（${fromA}〜${toA}） / 比較対象=${
                 basis === "baseline" ? "全体" : "セグ"
               }`}
               rows={periodRows}
+              leftLabel={periodLeftLabel}
+              rightLabel={periodRightLabel}
+              rightCountLabel={periodRightCountLabel}
             />
 
             <div className="flex flex-wrap gap-2">
