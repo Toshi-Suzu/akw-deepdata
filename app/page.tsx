@@ -215,34 +215,9 @@ export default function Home() {
                     rel="noreferrer"
                     className="inline-flex rounded-xl bg-slate-900 px-4 py-2 text-sm font-extrabold text-white hover:bg-slate-800"
                   >
-                    オリジナル壁紙を開く
+                    オリジナル壁紙をダウンロード
                   </a>
                 </div>
-                {submitted && (
-                  <div className="mt-6 rounded-2xl border border-slate-200 bg-white p-6 text-center">
-                    <p className="text-sm font-bold text-slate-900">
-                      ご回答ありがとうございました
-                    </p>
-
-                    <p className="mt-2 text-xs text-slate-500">
-                      名古屋港水族館オリジナル壁紙をダウンロードできます
-                    </p>
-
-                    {thankyouWallpaperLoading && (
-                      <p className="mt-3 text-xs text-slate-400">読み込み中...</p>
-                    )}
-
-                    {thankyouWallpaperUrl && (
-                      <a
-                        href={thankyouWallpaperUrl}
-                        download
-                        className="mt-4 inline-block rounded-xl bg-slate-900 px-5 py-3 text-sm font-bold text-white hover:bg-slate-800"
-                      >
-                        壁紙をダウンロード
-                      </a>
-                    )}
-                  </div>
-                )}
               </section>
             ) : (
               <section className="mt-5 rounded-2xl border border-slate-200 bg-slate-50 p-5">
