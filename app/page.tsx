@@ -166,8 +166,9 @@ export default function Home() {
         localStorage.setItem("akw_answered_visit_key", getVisitKeyJST());
         setAlreadyAnswered(true);
         setEditMode(false);
-        setSubmitted(true);
+
         await loadThankyouWallpaper();
+        setSubmitted(true);
       }
     } catch {
       setIsError(true);
@@ -217,6 +218,31 @@ export default function Home() {
                     オリジナル壁紙を開く
                   </a>
                 </div>
+                {submitted && (
+                  <div className="mt-6 rounded-2xl border border-slate-200 bg-white p-6 text-center">
+                    <p className="text-sm font-bold text-slate-900">
+                      ご回答ありがとうございました
+                    </p>
+
+                    <p className="mt-2 text-xs text-slate-500">
+                      名古屋港水族館オリジナル壁紙をダウンロードできます
+                    </p>
+
+                    {thankyouWallpaperLoading && (
+                      <p className="mt-3 text-xs text-slate-400">読み込み中...</p>
+                    )}
+
+                    {thankyouWallpaperUrl && (
+                      <a
+                        href={thankyouWallpaperUrl}
+                        download
+                        className="mt-4 inline-block rounded-xl bg-slate-900 px-5 py-3 text-sm font-bold text-white hover:bg-slate-800"
+                      >
+                        壁紙をダウンロード
+                      </a>
+                    )}
+                  </div>
+                )}
               </section>
             ) : (
               <section className="mt-5 rounded-2xl border border-slate-200 bg-slate-50 p-5">
