@@ -1056,31 +1056,6 @@ async function uploadWallpaper() {
             </div>
           </div>
         )}
-        <section className="mt-8 rounded-2xl border border-slate-200 bg-white p-5">
-          <h2 className="text-sm font-extrabold text-slate-900">
-            壁紙設定
-          </h2>
-
-          <p className="mt-2 text-xs text-slate-500">
-            Storageにアップした壁紙パスを入力してください
-          </p>
-
-          <div className="mt-3 flex gap-2">
-            <input
-              value={wallpaperPath}
-              onChange={(e) => setWallpaperPath(e.target.value)}
-              placeholder="wallpapers/wallpaper_2026feb.jpg"
-              className="w-full rounded-lg border px-3 py-2 text-sm"
-            />
-        
-            <button
-              onClick={updateWallpaper}
-              className="rounded-lg bg-slate-900 px-4 py-2 text-sm font-bold text-white"
-            >
-              更新
-            </button>
-          </div>
-        </section>
 
 <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
   <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
