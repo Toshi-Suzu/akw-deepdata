@@ -253,6 +253,8 @@ export default function AdminCompare() {
   const [data, setData] = useState<CompareResponse | null>(null);
   const [loading, setLoading] = useState(false);
 
+  const [wallpaperPath, setWallpaperPath] = useState("");
+
   useEffect(() => {
     const saved = localStorage.getItem("admin_token") ?? "";
     setToken(saved);
@@ -311,6 +313,27 @@ export default function AdminCompare() {
 
   function downloadCsv(extra: Record<string, string>) {
     window.location.href = exportUrl(extra);
+  }
+
+  async function updateWallpaper() {
+    const res = await fetch(`/api/admin/wallpaper?token=${token}`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        path: wallpaperPath,
+      }),
+    });
+
+    const json = await res.json().catch(() => ({}));
+
+    if (!res.ok) {
+      alert(json?.error ?? "更新に失敗しました");
+      return;
+    }
+
+    alert("壁紙を更新しました");
   }
 
   async function load() {
@@ -962,6 +985,31 @@ export default function AdminCompare() {
             </div>
           </div>
         )}
+        <section className="mt-8 rounded-2xl border border-slate-200 bg-white p-5">
+          <h2 className="text-sm font-extrabold text-slate-900">
+            壁紙設定
+          </h2>
+
+          <p className="mt-2 text-xs text-slate-500">
+            Storageにアップした壁紙パスを入力してください
+          </p>
+
+          <div className="mt-3 flex gap-2">
+            <input
+              value={wallpaperPath}
+              onChange={(e) => setWallpaperPath(e.target.value)}
+              placeholder="wallpapers/wallpaper_2026feb.jpg"
+              className="w-full rounded-lg border px-3 py-2 text-sm"
+            />
+        
+            <button
+              onClick={updateWallpaper}
+              className="rounded-lg bg-slate-900 px-4 py-2 text-sm font-bold text-white"
+            >
+              更新
+            </button>
+          </div>
+        </section>
       </div>
     </main>
   );
