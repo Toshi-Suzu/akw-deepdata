@@ -33,7 +33,7 @@ function getRespondentId() {
 function getVisitKeyJST() {
   const now = new Date();
   const jst = new Date(now.getTime() + 9 * 60 * 60 * 1000);
-  return jst.toISOString().slice(0, 10); // YYYY-MM-DD
+  return jst.toISOString().slice(0, 10);
 }
 
 export default function Home() {
@@ -57,6 +57,10 @@ export default function Home() {
 
   const [alreadyAnswered, setAlreadyAnswered] = useState(false);
   const [editMode, setEditMode] = useState(false);
+
+  const [submitted, setSubmitted] = useState(false);
+  const [thankyouWallpaperUrl, setThankyouWallpaperUrl] = useState("");
+  const [thankyouWallpaperLoading, setThankyouWallpaperLoading] = useState(false);
 
   useEffect(() => {
     const saved = localStorage.getItem("akw_answered_visit_key");
@@ -87,7 +91,6 @@ export default function Home() {
     setForm((prev) => {
       const next = { ...prev, [stepKey]: value };
 
-      // 子ども同伴なしに変えたら年齢はクリア
       if (stepKey === "child_with" && value !== "はい") {
         next.child_age_band = "";
       }
@@ -108,6 +111,29 @@ export default function Home() {
     setStepIndex((i) => Math.max(i - 1, 0));
     setMsg(null);
     setIsError(false);
+  }
+
+  async function loadThankyouWallpaper() {
+    try {
+      setThankyouWallpaperLoading(true);
+
+      const res = await fetch("/api/thankyou-wallpaper", {
+        cache: "no-store",
+      });
+
+      const json = await res.json().catch(() => ({}));
+
+      if (!res.ok || !json?.ok || !json?.url) {
+        setThankyouWallpaperUrl("");
+        return;
+      }
+
+      setThankyouWallpaperUrl(json.url);
+    } catch {
+      setThankyouWallpaperUrl("");
+    } finally {
+      setThankyouWallpaperLoading(false);
+    }
   }
 
   async function submit() {
@@ -137,12 +163,11 @@ export default function Home() {
         setIsError(true);
         setMsg(data.error ?? "送信に失敗しました");
       } else {
-        setIsError(false);
-        setMsg(editMode ? "修正内容を保存しました（上書きOK）" : "送信しました（ご協力ありがとうございました）");
-
         localStorage.setItem("akw_answered_visit_key", getVisitKeyJST());
         setAlreadyAnswered(true);
         setEditMode(false);
+        setSubmitted(true);
+        await loadThankyouWallpaper();
       }
     } catch {
       setIsError(true);
@@ -153,6 +178,60 @@ export default function Home() {
   }
 
   const isLast = stepIndex === steps.length - 1;
+
+  if (submitted) {
+    return (
+      <main className="min-h-screen bg-slate-50 px-4 py-10">
+        <div className="mx-auto w-full max-w-xl">
+          <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+            <h1 className="text-xl font-extrabold tracking-tight text-slate-900">
+              送信が完了しました
+            </h1>
+            <p className="mt-2 text-sm leading-relaxed text-slate-600">
+              アンケートへのご協力ありがとうございました。
+            </p>
+
+            {thankyouWallpaperLoading ? (
+              <div className="mt-5 rounded-2xl border border-slate-200 bg-slate-50 p-4 text-sm text-slate-600">
+                壁紙を準備しています…
+              </div>
+            ) : thankyouWallpaperUrl ? (
+              <section className="mt-5 rounded-2xl border border-sky-200 bg-sky-50 p-5">
+                <h2 className="text-base font-extrabold text-slate-900">
+                  オリジナル壁紙プレゼント
+                </h2>
+                <p className="mt-2 text-sm text-slate-700">
+                  アンケート回答特典として、水族館オリジナル壁紙をご利用いただけます。
+                </p>
+                <p className="mt-1 text-xs leading-relaxed text-slate-600">
+                  ボタンを押すと画像が開きます。スマートフォンに保存して壁紙としてご利用ください。
+                </p>
+
+                <div className="mt-4">
+                  <a
+                    href={thankyouWallpaperUrl}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="inline-flex rounded-xl bg-slate-900 px-4 py-2 text-sm font-extrabold text-white hover:bg-slate-800"
+                  >
+                    オリジナル壁紙を開く
+                  </a>
+                </div>
+              </section>
+            ) : (
+              <section className="mt-5 rounded-2xl border border-slate-200 bg-slate-50 p-5">
+                <p className="text-sm text-slate-700">壁紙のご案内を準備中です。</p>
+              </section>
+            )}
+
+            <p className="mt-5 text-xs leading-relaxed text-slate-500">
+              ※回答データは統計分析のみに利用します。
+            </p>
+          </section>
+        </div>
+      </main>
+    );
+  }
 
   return (
     <main className="min-h-screen bg-slate-50 px-4 py-10">
