@@ -1065,29 +1065,33 @@ async function uploadWallpaper() {
         ローカル画像を選んでアップロードすると、回答完了画面の壁紙を切り替えます。
       </p>
       {currentWallpaperPath && (
-        <p className="mt-2 text-xs text-slate-600">
+        <p className="mt-2 text-xs text-slate-600 break-all">
           現在の画像: {currentWallpaperPath}
         </p>
       )}
     </div>
   </div>
 
-  <div className="mt-4 grid gap-4 md:grid-cols-2">
+  <div className="mt-4 grid gap-6 lg:grid-cols-2">
     <div className="space-y-3">
-      <div>
-        <div className="text-xs font-extrabold text-slate-700">現在の壁紙</div>
-        <div className="mt-2 overflow-hidden rounded-2xl border border-slate-200 bg-slate-50">
-          {currentWallpaperUrl ? (
-            <img
-              src={currentWallpaperUrl}
-              alt="現在の壁紙"
-              className="block h-[320px] w-full object-contain bg-slate-100"
-            />
-          ) : (
-            <div className="flex h-[320px] items-center justify-center text-sm text-slate-400">
-              画像なし
-            </div>
-          )}
+      <div className="text-xs font-extrabold text-slate-700">現在の壁紙</div>
+
+      <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+        <div className="mx-auto w-[200px] rounded-[28px] border-4 border-slate-900 bg-slate-900 p-2 shadow-md">
+          <div className="relative overflow-hidden rounded-[22px] bg-slate-100" style={{ aspectRatio: "9 / 19.5" }}>
+            <div className="pointer-events-none absolute left-1/2 top-2 z-10 h-5 w-24 -translate-x-1/2 rounded-full bg-slate-900/90" />
+            {currentWallpaperUrl ? (
+              <img
+                src={currentWallpaperUrl}
+                alt="現在の壁紙"
+                className="block h-full w-full object-cover"
+              />
+            ) : (
+              <div className="flex h-full w-full items-center justify-center px-4 text-center text-sm text-slate-400">
+                画像なし
+              </div>
+            )}
+          </div>
         </div>
       </div>
     </div>
@@ -1108,18 +1112,23 @@ async function uploadWallpaper() {
         </p>
       </div>
 
-      <div className="overflow-hidden rounded-2xl border border-slate-200 bg-slate-50">
-        {wallpaperPreviewUrl ? (
-          <img
-            src={wallpaperPreviewUrl}
-            alt="新しい壁紙プレビュー"
-            className="block h-[320px] w-full object-contain bg-slate-100"
-          />
-        ) : (
-          <div className="flex h-[320px] items-center justify-center text-sm text-slate-400">
-            選択した画像のプレビューがここに表示されます
+      <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+        <div className="mx-auto w-[200px] rounded-[28px] border-4 border-slate-900 bg-slate-900 p-2 shadow-md">
+          <div className="relative overflow-hidden rounded-[22px] bg-slate-100" style={{ aspectRatio: "9 / 19.5" }}>
+            <div className="pointer-events-none absolute left-1/2 top-2 z-10 h-5 w-24 -translate-x-1/2 rounded-full bg-slate-900/90" />
+            {wallpaperPreviewUrl ? (
+              <img
+                src={wallpaperPreviewUrl}
+                alt="新しい壁紙プレビュー"
+                className="block h-full w-full object-cover"
+              />
+            ) : (
+              <div className="flex h-full w-full items-center justify-center px-4 text-center text-sm text-slate-400">
+                選択した画像のプレビューがここに表示されます
+              </div>
+            )}
           </div>
-        )}
+        </div>
       </div>
 
       <div className="flex flex-wrap gap-2">
