@@ -658,35 +658,41 @@ async function uploadWallpaper() {
               手動
             </button>
 
-            <div className="ml-auto flex items-center gap-2">
-              <label className="text-xs font-bold text-slate-700">年代</label>
-              <select
-                value={ageBand}
-                onChange={(e) => setAgeBand(e.target.value)}
-                className="rounded-xl border border-slate-200 px-3 py-2 text-sm"
-              >
-                <option value="">（全体）</option>
-                <option>10代</option>
-                <option>20代</option>
-                <option>30代</option>
-                <option>40代</option>
-                <option>50代</option>
-                <option>60代+</option>
-              </select>
+<div className="rounded-xl bg-slate-50 p-3 flex flex-col gap-1">
+  <div className="text-xs font-extrabold text-slate-700">比較する属性</div>
+  <p className="text-[11px] text-slate-500">
+    ここで指定した人の回答を、全体と比べて表示します
+  </p>
 
-              <label className="text-xs font-bold text-slate-700">性別</label>
-              <select
-                value={gender}
-                onChange={(e) => setGender(e.target.value)}
-                className="rounded-xl border border-slate-200 px-3 py-2 text-sm"
-              >
-                <option value="">（全体）</option>
-                <option>女性</option>
-                <option>男性</option>
-                <option>回答しない</option>
-              </select>
-            </div>
-          </div>
+  <div className="flex items-center gap-2">
+    <label className="text-xs font-bold text-slate-700">年代</label>
+    <select
+      value={ageBand}
+      onChange={(e) => setAgeBand(e.target.value)}
+      className="rounded-xl border border-slate-200 px-3 py-2 text-sm"
+    >
+      <option value="">指定しない（全体）</option>
+      <option>10代</option>
+      <option>20代</option>
+      <option>30代</option>
+      <option>40代</option>
+      <option>50代</option>
+      <option>60代+</option>
+    </select>
+
+    <label className="text-xs font-bold text-slate-700">性別</label>
+    <select
+      value={gender}
+      onChange={(e) => setGender(e.target.value)}
+      className="rounded-xl border border-slate-200 px-3 py-2 text-sm"
+    >
+      <option value="">指定しない（全体）</option>
+      <option>女性</option>
+      <option>男性</option>
+      <option>回答しない</option>
+    </select>
+  </div>
+</div>
 
           {mode === "preset" && (
             <div className="grid gap-3 md:grid-cols-12">
@@ -966,8 +972,7 @@ async function uploadWallpaper() {
             </div>
 
 <section className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
-  <div className="flex flex-wrap items-center gap-3">
-
+  <div className="flex flex-col gap-4">
     <div className="text-sm font-extrabold text-slate-900">
       全体と比べて特徴が大きい項目
     </div>
