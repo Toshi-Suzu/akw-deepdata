@@ -152,7 +152,7 @@ function DiffSummaryCard({
       <div className="flex items-end justify-between gap-3">
         <div>
           <h3 className="text-sm font-extrabold text-slate-900">{title}</h3>
-          <p className="mt-1 text-xs text-slate-600">全体→セグの差が大きい順（pt）</p>
+          <p className="mt-1 text-xs text-slate-600">全体と属性の差が大きい順</p>
         </div>
       </div>
 
@@ -162,9 +162,9 @@ function DiffSummaryCard({
             <tr className="text-xs text-slate-600">
               <th className="text-left py-2 pr-3">カテゴリ</th>
               <th className="text-right py-2 px-2">全体割合</th>
-              <th className="text-right py-2 px-2">セグ割合</th>
+              <th className="text-right py-2 px-2">属性割合</th>
               <th className="text-right py-2 px-2">差（pt）</th>
-              <th className="text-right py-2 pl-2">セグ回答数</th>
+              <th className="text-right py-2 pl-2">属性人数</th>
             </tr>
           </thead>
           <tbody>
@@ -253,8 +253,6 @@ export default function AdminCompare() {
   const [data, setData] = useState<CompareResponse | null>(null);
   const [loading, setLoading] = useState(false);
 
-  const [wallpaperPath, setWallpaperPath] = useState("");
-
   const [currentWallpaperUrl, setCurrentWallpaperUrl] = useState("");
   const [currentWallpaperPath, setCurrentWallpaperPath] = useState("");
   const [wallpaperFile, setWallpaperFile] = useState<File | null>(null);
@@ -331,27 +329,6 @@ export default function AdminCompare() {
 
     const objectUrl = URL.createObjectURL(file);
     setWallpaperPreviewUrl(objectUrl);
-  }
-
-  async function updateWallpaper() {
-    const res = await fetch(`/api/admin/wallpaper?token=${token}`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        path: wallpaperPath,
-      }),
-    });
-
-    const json = await res.json().catch(() => ({}));
-
-    if (!res.ok) {
-      alert(json?.error ?? "更新に失敗しました");
-      return;
-    }
-
-    alert("壁紙を更新しました");
   }
 
 async function loadCurrentWallpaper() {
@@ -586,12 +563,12 @@ async function uploadWallpaper() {
   }, [segSummaryPack]);
 
   const segLeftLabel = "全体割合";
-  const segRightLabel = "セグ割合";
-  const segRightCountLabel = "セグ回答数";
+  const segRightLabel = "属性割合";
+  const segRightCountLabel = "属性人数";
 
-  const periodLeftLabel = basis === "baseline" ? "期間Bの全体割合" : "期間Bのセグ割合";
-  const periodRightLabel = basis === "baseline" ? "期間Aの全体割合" : "期間Aのセグ割合";
-  const periodRightCountLabel = basis === "baseline" ? "期間Aの全体回答数" : "期間Aのセグ回答数";
+  const periodLeftLabel = basis === "baseline" ? "期間Bの全体割合" : "期間Bの属性割合";
+  const periodRightLabel = basis === "baseline" ? "期間Aの全体割合" : "期間Aの属性割合";
+  const periodRightCountLabel = basis === "baseline" ? "期間Aの全体人数" : "期間Aの属性人数";
 
   return !token ? (
     tokenRequiredView
@@ -602,7 +579,7 @@ async function uploadWallpaper() {
           <div>
             <h1 className="text-2xl font-extrabold text-slate-900">名古屋港水族館 来館アンケート 管理画面</h1>
             <p className="mt-1 text-sm text-slate-600">
-              「全体 vs セグ」/「期間A vs 期間B」の差分をランキングで自動抽出
+              「全体と属性の比較」または「期間Aと期間Bの比較」を表示します
             </p>
           </div>
 
@@ -614,7 +591,7 @@ async function uploadWallpaper() {
                 setGender("");
               }}
             >
-              セグ解除
+              属性指定を解除
             </button>
 
             <button
@@ -817,10 +794,10 @@ async function uploadWallpaper() {
           </div>
 
           <div className="flex flex-wrap gap-3 items-center">
-            <Kpi label="期間A：全体n" value={data?.periodA?.baselineTotal ?? "-"} />
-            <Kpi label="期間A：セグn" value={data?.periodA?.segmentTotal ?? "-"} />
-            <Kpi label="期間B：全体n" value={data?.periodB?.baselineTotal ?? "-"} />
-            <Kpi label="期間B：セグn" value={data?.periodB?.segmentTotal ?? "-"} />
+            <Kpi label="期間A：全体人数" value={data?.periodA?.baselineTotal ?? "-"} />
+            <Kpi label="期間A：属性人数" value={data?.periodA?.segmentTotal ?? "-"} />
+            <Kpi label="期間B：全体人数" value={data?.periodB?.baselineTotal ?? "-"} />
+            <Kpi label="期間B：属性人数" value={data?.periodB?.segmentTotal ?? "-"} />
 
             {data?.error && (
               <div className="rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-sm font-bold text-red-800">
@@ -843,7 +820,7 @@ async function uploadWallpaper() {
                 }`}
                 onClick={() => setAnalysisMode("seg")}
               >
-                全体 vs セグ
+                全体と属性を比較
               </button>
 
               <button
@@ -854,7 +831,7 @@ async function uploadWallpaper() {
                 }`}
                 onClick={() => setAnalysisMode("period")}
               >
-                期間A vs 期間B
+                期間Aと期間Bを比較
               </button>
 
               {analysisMode === "seg" ? (
@@ -902,7 +879,7 @@ async function uploadWallpaper() {
                     }`}
                     onClick={() => setBasis("segment")}
                   >
-                    セグ
+                    属性
                   </button>
                 </div>
               )}
@@ -941,10 +918,10 @@ async function uploadWallpaper() {
         {analysisMode === "seg" ? (
           <div className="space-y-6">
             <DiffTable
-              title={`${segPeriod === "A" ? "期間A" : "期間B"}：${GROUP_TITLES[groupKey]}（全体 vs セグ）`}
+              title={`${segPeriod === "A" ? "期間A" : "期間B"}：${GROUP_TITLES[groupKey]}（全体と属性の比較）`}
               subtitle={`左=全体 / 右=${
                 ageBand || gender ? `${ageBand || ""}${gender || ""}` : "（全体）"
-              }（※セグ未指定なら同じ）`}
+              }（※属性未指定なら同じ）`}
               rows={segRows}
               leftLabel={segLeftLabel}
               rightLabel={segRightLabel}
@@ -985,7 +962,7 @@ async function uploadWallpaper() {
               <div className="flex flex-wrap items-center gap-3">
                 <div className="text-sm font-extrabold text-slate-900">差分ランキングサマリー</div>
                 <div className="text-xs text-slate-600">
-                  対象={segPeriod === "A" ? "期間A" : "期間B"} / セグ=
+                  対象={segPeriod === "A" ? "期間A" : "期間B"} / 属性=
                   {ageBand || gender ? `${ageBand || ""}${gender || ""}` : "未指定"}
                 </div>
                 <div className="text-xs text-slate-600">n={segSummaryPack?.segmentTotal ?? 0}</div>
@@ -1017,7 +994,7 @@ async function uploadWallpaper() {
             <DiffTable
               title={`${GROUP_TITLES[groupKey]}（期間A vs 期間B）`}
               subtitle={`左=期間B（${fromB}〜${toB}） / 右=期間A（${fromA}〜${toA}） / 比較対象=${
-                basis === "baseline" ? "全体" : "セグ"
+                basis === "baseline" ? "全体" : "属性"
               }`}
               rows={periodRows}
               leftLabel={periodLeftLabel}
