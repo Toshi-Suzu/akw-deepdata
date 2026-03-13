@@ -658,7 +658,7 @@ async function uploadWallpaper() {
               手動
             </button>
 
-<div className="rounded-xl bg-slate-50 p-3 flex flex-col gap-1">
+<div className="ml-auto flex flex-col gap-1">
   <div className="text-xs font-extrabold text-slate-700">比較する属性</div>
   <p className="text-[11px] text-slate-500">
     ここで指定した人の回答を、全体と比べて表示します
