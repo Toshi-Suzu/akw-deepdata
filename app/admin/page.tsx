@@ -152,7 +152,9 @@ function DiffSummaryCard({
       <div className="flex items-end justify-between gap-3">
         <div>
           <h3 className="text-sm font-extrabold text-slate-900">{title}</h3>
-          <p className="mt-1 text-xs text-slate-600">全体と属性の差が大きい順</p>
+          <p className="mt-1 text-xs text-slate-600">
+            全体と比べて特徴が出ている上位3つ
+          </p>
         </div>
       </div>
 
@@ -160,32 +162,38 @@ function DiffSummaryCard({
         <table className="min-w-[760px] w-full text-sm">
           <thead>
             <tr className="text-xs text-slate-600">
-              <th className="text-left py-2 pr-3">カテゴリ</th>
-              <th className="text-right py-2 px-2">全体割合</th>
-              <th className="text-right py-2 px-2">属性割合</th>
-              <th className="text-right py-2 px-2">差（pt）</th>
-              <th className="text-right py-2 pl-2">属性人数</th>
+              <th className="text-left py-2 pr-3">選択肢</th>
+              <th className="text-right py-2 px-2">全体</th>
+              <th className="text-right py-2 px-2">指定した属性</th>
+              <th className="text-right py-2 px-2">差</th>
+              <th className="text-right py-2 pl-2">回答人数</th>
             </tr>
           </thead>
+
           <tbody>
             {items.slice(0, 3).map((r) => (
               <tr key={`${r.groupKey}-${r.label}`} className="border-t border-slate-100">
                 <td className="py-2 pr-3 font-semibold text-slate-800">{r.label}</td>
+
                 <td className="py-2 px-2 text-right text-slate-700">
                   {r.baselineRatio.toFixed(1)}%
-                  <span className="ml-1 text-[11px] text-slate-400">({r.baselineCount})</span>
                 </td>
+
                 <td className="py-2 px-2 text-right text-slate-700">
                   {r.segmentRatio.toFixed(1)}%
-                  <span className="ml-1 text-[11px] text-slate-400">({r.segmentCount})</span>
                 </td>
+
                 <td className="py-2 px-2 text-right font-extrabold text-slate-900">
                   {r.diffPt > 0 ? "+" : ""}
                   {r.diffPt.toFixed(1)}pt
                 </td>
-                <td className="py-2 pl-2 text-right text-slate-700">{r.segmentCount}</td>
+
+                <td className="py-2 pl-2 text-right text-slate-700">
+                  {r.segmentCount}
+                </td>
               </tr>
             ))}
+
             {items.length === 0 && (
               <tr>
                 <td className="py-3 text-sm text-slate-500" colSpan={5}>
@@ -820,7 +828,7 @@ async function uploadWallpaper() {
                 }`}
                 onClick={() => setAnalysisMode("seg")}
               >
-                全体と属性を比較
+                指定した属性の特徴を見る
               </button>
 
               <button
@@ -958,28 +966,38 @@ async function uploadWallpaper() {
               </button>
             </div>
 
-            <section className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
-              <div className="flex flex-wrap items-center gap-3">
-                <div className="text-sm font-extrabold text-slate-900">差分ランキングサマリー</div>
-                <div className="text-xs text-slate-600">
-                  対象={segPeriod === "A" ? "期間A" : "期間B"} / 属性=
-                  {ageBand || gender ? `${ageBand || ""}${gender || ""}` : "未指定"}
-                </div>
-                <div className="text-xs text-slate-600">n={segSummaryPack?.segmentTotal ?? 0}</div>
-                {(segSummaryPack?.segmentTotal ?? 0) < 10 && (
-                  <div className="rounded-lg bg-amber-100 px-2 py-1 text-xs font-bold text-amber-800">
-                    参考値（n&lt;10）
-                  </div>
-                )}
-              </div>
-            </section>
+<section className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+  <div className="flex flex-wrap items-center gap-3">
+
+    <div className="text-sm font-extrabold text-slate-900">
+      全体と比べて特徴が大きい項目
+    </div>
+
+    <div className="text-xs text-slate-600">
+      {ageBand || gender
+        ? `${segPeriod === "A" ? "期間A" : "期間B"}の「${ageBand || ""}${gender || ""}」を全体と比較しています`
+        : `${segPeriod === "A" ? "期間A" : "期間B"}の回答を表示しています（属性指定なし）`}
+    </div>
+
+    <div className="text-xs text-slate-600">
+      回答人数：{segSummaryPack?.segmentTotal ?? 0}
+    </div>
+
+    {(segSummaryPack?.segmentTotal ?? 0) < 10 && (
+      <div className="rounded-lg bg-amber-100 px-2 py-1 text-xs font-bold text-amber-800">
+        回答人数が少ないため参考値です
+      </div>
+    )}
+
+  </div>
+</section>
 
             <details className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
               <summary className="cursor-pointer text-sm font-extrabold text-slate-900">
-                項目別差分を見る
+                各項目の詳しい結果を見る
               </summary>
               <p className="mt-2 text-xs text-slate-600">
-                居住地・同伴・子ども同伴・来館頻度・きっかけ・情報源など、設問ごとの上位差分を表示します。
+                居住地・同伴・子ども同伴・来館頻度・きっかけ・情報源など、各設問ごとに、全体と比べて特徴が出ている回答を表示します。
               </p>
 
               <div className="mt-4 grid gap-4 md:grid-cols-2 xl:grid-cols-3">
