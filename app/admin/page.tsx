@@ -663,6 +663,7 @@ async function uploadWallpaper() {
   <p className="text-[11px] text-slate-500">
     ここで指定した人の回答を、全体と比べて表示します
   </p>
+</div>
 
   <div className="flex items-center gap-2">
     <label className="text-xs font-bold text-slate-700">年代</label>
