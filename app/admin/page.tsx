@@ -86,7 +86,7 @@ function DiffTable({
       </div>
 
       <div className="mt-2 rounded-xl bg-slate-50 px-3 py-2 text-[11px] text-slate-600">
-        差（pt）は割合の差です。偏り倍率は、右側が左側に対してどれくらい強く出ているかの目安です。
+        差（pt）は割合の差です。偏り倍率は、右側の回答が左側よりどれくらい多いかの目安です。
       </div>
 
       <div className="mt-3 overflow-auto">
@@ -570,12 +570,12 @@ async function uploadWallpaper() {
     }));
   }, [segSummaryPack]);
 
-  const segLeftLabel = "全体割合";
-  const segRightLabel = "属性割合";
+  const segLeftLabel = "全体の回答割合";
+  const segRightLabel = "指定した属性の回答割合";
   const segRightCountLabel = "属性人数";
 
-  const periodLeftLabel = basis === "baseline" ? "期間Bの全体割合" : "期間Bの属性割合";
-  const periodRightLabel = basis === "baseline" ? "期間Aの全体割合" : "期間Aの属性割合";
+  const periodLeftLabel = basis === "baseline" ? "期間Bの回答割合（全体）" : "期間Bの回答割合（指定した属性）";
+  const periodRightLabel = basis === "baseline" ? "期間Aの回答割合（全体）" : "期間Aの回答割合（指定した属性）";
   const periodRightCountLabel = basis === "baseline" ? "期間Aの全体人数" : "期間Aの属性人数";
 
   return !token ? (
@@ -893,7 +893,7 @@ async function uploadWallpaper() {
             </div>
 
             <div className="flex flex-wrap items-center gap-2">
-              <label className="text-xs font-bold text-slate-700">項目</label>
+              <label className="text-xs font-bold text-slate-700">比較する項目</label>
               <select
                 value={groupKey}
                 onChange={(e) => setGroupKey(e.target.value as GroupKey)}
