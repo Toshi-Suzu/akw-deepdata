@@ -600,7 +600,7 @@ async function uploadWallpaper() {
       <div className="mx-auto max-w-7xl space-y-6">
         <header className="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
           <div>
-            <h1 className="text-2xl font-extrabold text-slate-900">DeepData Admin（比較）</h1>
+            <h1 className="text-2xl font-extrabold text-slate-900">名古屋港水族館 来館アンケート 管理画面</h1>
             <p className="mt-1 text-sm text-slate-600">
               「全体 vs セグ」/「期間A vs 期間B」の差分をランキングで自動抽出
             </p>
