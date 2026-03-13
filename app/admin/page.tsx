@@ -802,11 +802,10 @@ async function uploadWallpaper() {
           </div>
 
           <div className="flex flex-wrap gap-3 items-center">
-            <Kpi label="期間A：全体人数" value={data?.periodA?.baselineTotal ?? "-"} />
-            <Kpi label="期間A：属性人数" value={data?.periodA?.segmentTotal ?? "-"} />
-            <Kpi label="期間B：全体人数" value={data?.periodB?.baselineTotal ?? "-"} />
-            <Kpi label="期間B：属性人数" value={data?.periodB?.segmentTotal ?? "-"} />
-
+<Kpi label="期間A：回答数（全体）" value={data?.periodA?.baselineTotal ?? "-"} />
+<Kpi label="期間A：回答数（指定した属性）" value={data?.periodA?.segmentTotal ?? "-"} />
+<Kpi label="期間B：回答数（全体）" value={data?.periodB?.baselineTotal ?? "-"} />
+<Kpi label="期間B：回答数（指定した属性）" value={data?.periodB?.segmentTotal ?? "-"} />
             {data?.error && (
               <div className="rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-sm font-bold text-red-800">
                 {data.error}
@@ -818,7 +817,7 @@ async function uploadWallpaper() {
         <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
           <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
             <div className="flex flex-wrap items-center gap-2">
-              <div className="text-xs font-extrabold text-slate-700">分析モード</div>
+              <div className="text-xs font-extrabold text-slate-700">表示方法</div>
 
               <button
                 className={`rounded-xl px-3 py-1.5 text-sm font-bold border ${
@@ -918,7 +917,7 @@ async function uploadWallpaper() {
           </div>
 
           <p className="mt-2 text-xs text-slate-600">
-            「期間A vs 期間B」は、差（pt）が <span className="font-bold">期間A − 期間B</span>
+            「期間Aと期間Bを比較」は、差（pt）が <span className="font-bold">期間A − 期間B</span>
             になるよう表示しています。プラスなら期間Aの方が高く、マイナスなら期間Bの方が高いです。
           </p>
         </section>
@@ -1009,17 +1008,16 @@ async function uploadWallpaper() {
           </div>
         ) : (
           <div className="space-y-3">
-            <DiffTable
-              title={`${GROUP_TITLES[groupKey]}（期間A vs 期間B）`}
-              subtitle={`左=期間B（${fromB}〜${toB}） / 右=期間A（${fromA}〜${toA}） / 比較対象=${
-                basis === "baseline" ? "全体" : "属性"
-              }`}
-              rows={periodRows}
-              leftLabel={periodLeftLabel}
-              rightLabel={periodRightLabel}
-              rightCountLabel={periodRightCountLabel}
-            />
-
+<DiffTable
+  title={`${GROUP_TITLES[groupKey]}（期間比較）`}
+  subtitle={`左は期間B（${fromB}〜${toB}）、右は期間A（${fromA}〜${toA}）。比較対象：${
+    basis === "baseline" ? "全体" : "指定した属性"
+  }`}
+  rows={periodRows}
+  leftLabel={periodLeftLabel}
+  rightLabel={periodRightLabel}
+  rightCountLabel={periodRightCountLabel}
+/>
             <div className="flex flex-wrap gap-2">
               <button
                 className="rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-bold text-slate-700 hover:bg-slate-50"
