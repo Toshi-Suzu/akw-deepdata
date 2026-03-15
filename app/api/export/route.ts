@@ -62,9 +62,7 @@ async function fetchRows(
         "residence",
         "companion_type",
         "visit_frequency",
-        "trigger",
         "info_source",
-        "top_interest",
         "child_age_band",
       ].join(",")
     )
@@ -139,9 +137,7 @@ export async function GET(req: Request) {
         "residence",
         "companion_type",
         "visit_frequency",
-        "trigger",
         "info_source",
-        "top_interest",
         "child_age_band",
       ];
 

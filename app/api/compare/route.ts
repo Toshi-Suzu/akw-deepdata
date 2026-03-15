@@ -98,7 +98,7 @@ async function fetchRows(
   let q = supabase
     .from("responses")
     .select(
-      "visit_key,created_at,age_band,gender,residence,companion_type,visit_frequency,trigger,info_source,top_interest,child_with,child_age_band"
+      "visit_key,created_at,age_band,gender,residence,companion_type,visit_frequency,info_source,child_with,child_age_band"
     )
     .gte("visit_key", fromYmd)
     .lte("visit_key", toYmd);
