@@ -573,6 +573,18 @@ async function uploadWallpaper() {
   const segLeftLabel = "全体の回答割合";
   const segRightLabel = "指定した属性の回答割合";
   const segRightCountLabel = "属性人数";
+  const currentPeriodLabel =
+    analysisMode === "seg"
+      ? `${segPeriod === "A" ? "期間A" : "期間B"}を表示`
+      : "期間Aと期間Bを比較";
+
+  const currentAttributeLabel =
+    ageBand || gender
+      ? `${ageBand || ""}${gender || ""}`
+      : "指定なし（全体）";
+
+  const currentBasisLabel =
+    basis === "baseline" ? "全体" : "指定した属性";
 
   const periodLeftLabel = basis === "baseline" ? "期間Bの回答割合（全体）" : "期間Bの回答割合（指定した属性）";
   const periodRightLabel = basis === "baseline" ? "期間Aの回答割合（全体）" : "期間Aの回答割合（指定した属性）";
@@ -635,66 +647,71 @@ async function uploadWallpaper() {
         </header>
 
         <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm space-y-4">
-          <div className="flex flex-wrap items-center gap-3">
-            <div className="text-xs font-extrabold text-slate-700">期間モード</div>
-            <button
-              className={`rounded-xl px-3 py-1.5 text-sm font-bold border ${
-                mode === "preset"
-                  ? "bg-slate-900 text-white border-slate-900"
-                  : "bg-white text-slate-700 border-slate-200 hover:bg-slate-50"
-              }`}
-              onClick={() => setMode("preset")}
-            >
-              プリセット
-            </button>
-            <button
-              className={`rounded-xl px-3 py-1.5 text-sm font-bold border ${
-                mode === "manual"
-                  ? "bg-slate-900 text-white border-slate-900"
-                  : "bg-white text-slate-700 border-slate-200 hover:bg-slate-50"
-              }`}
-              onClick={() => setMode("manual")}
-            >
-              手動
-            </button>
+<div className="flex flex-col gap-4">
+  <div className="flex flex-wrap items-center gap-3">
+    <div className="text-xs font-extrabold text-slate-700">期間モード</div>
 
-<div className="rounded-xl bg-slate-50 p-3 flex flex-col gap-1">
-  <div className="text-xs font-extrabold text-slate-700">比較する来館者の属性</div>
-  <p className="text-[11px] text-slate-500">
-    ここで指定した人の回答を、全体と比べて表示します
-  </p>
-</div>
-
-  <div className="flex items-center gap-2">
-    <label className="text-xs font-bold text-slate-700">年代</label>
-    <select
-      value={ageBand}
-      onChange={(e) => setAgeBand(e.target.value)}
-      className="rounded-xl border border-slate-200 px-3 py-2 text-sm"
+    <button
+      className={`rounded-xl px-3 py-1.5 text-sm font-bold border ${
+        mode === "preset"
+          ? "bg-slate-900 text-white border-slate-900"
+          : "bg-white text-slate-700 border-slate-200 hover:bg-slate-50"
+      }`}
+      onClick={() => setMode("preset")}
     >
-      <option value="">指定しない（全体）</option>
-      <option>10代</option>
-      <option>20代</option>
-      <option>30代</option>
-      <option>40代</option>
-      <option>50代</option>
-      <option>60代+</option>
-    </select>
+      プリセット
+    </button>
 
-    <label className="text-xs font-bold text-slate-700">性別</label>
-    <select
-      value={gender}
-      onChange={(e) => setGender(e.target.value)}
-      className="rounded-xl border border-slate-200 px-3 py-2 text-sm"
+    <button
+      className={`rounded-xl px-3 py-1.5 text-sm font-bold border ${
+        mode === "manual"
+          ? "bg-slate-900 text-white border-slate-900"
+          : "bg-white text-slate-700 border-slate-200 hover:bg-slate-50"
+      }`}
+      onClick={() => setMode("manual")}
     >
-      <option value="">指定しない（全体）</option>
-      <option>女性</option>
-      <option>男性</option>
-      <option>回答しない</option>
-    </select>
+      手動
+    </button>
+  </div>
+
+  <div className="rounded-xl bg-slate-50 p-3">
+    <div className="text-xs font-extrabold text-slate-700">
+      比較する来館者の属性
+    </div>
+    <p className="mt-1 text-[11px] text-slate-500">
+      ここで指定した人の回答を、全体と比べて表示します
+    </p>
+
+    <div className="mt-3 flex flex-wrap items-center gap-2">
+      <label className="text-xs font-bold text-slate-700">年代</label>
+      <select
+        value={ageBand}
+        onChange={(e) => setAgeBand(e.target.value)}
+        className="rounded-xl border border-slate-200 px-3 py-2 text-sm"
+      >
+        <option value="">指定しない（全体）</option>
+        <option>10代</option>
+        <option>20代</option>
+        <option>30代</option>
+        <option>40代</option>
+        <option>50代</option>
+        <option>60代+</option>
+      </select>
+
+      <label className="text-xs font-bold text-slate-700">性別</label>
+      <select
+        value={gender}
+        onChange={(e) => setGender(e.target.value)}
+        className="rounded-xl border border-slate-200 px-3 py-2 text-sm"
+      >
+        <option value="">指定しない（全体）</option>
+        <option>女性</option>
+        <option>男性</option>
+        <option>回答しない</option>
+      </select>
+    </div>
   </div>
 </div>
-
           {mode === "preset" && (
             <div className="grid gap-3 md:grid-cols-12">
               <div className="md:col-span-6 rounded-2xl border border-slate-100 bg-slate-50 p-4">
@@ -820,6 +837,34 @@ async function uploadWallpaper() {
             )}
           </div>
         </section>
+
+<section className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+  <div className="text-sm font-extrabold text-slate-900">現在の条件</div>
+
+  <div className="mt-3 grid gap-2 md:grid-cols-2 xl:grid-cols-4 text-sm text-slate-700">
+    <div>
+      <span className="font-bold text-slate-900">期間A：</span>
+      {fromA || "未指定"}〜{toA || "未指定"}
+    </div>
+
+    <div>
+      <span className="font-bold text-slate-900">期間B：</span>
+      {fromB || "未指定"}〜{toB || "未指定"}
+    </div>
+
+    <div>
+      <span className="font-bold text-slate-900">来館者属性：</span>
+      {currentAttributeLabel}
+    </div>
+
+    <div>
+      <span className="font-bold text-slate-900">分析方法：</span>
+      {analysisMode === "seg"
+        ? `${currentPeriodLabel} / 全体と指定した属性を比較`
+        : `${currentPeriodLabel} / 比較対象：${currentBasisLabel}`}
+    </div>
+  </div>
+</section>
 
         <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
           <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
