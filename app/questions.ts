@@ -9,17 +9,27 @@ export type StepKey =
   | "child_with"
   | "child_age_band"
   | "visit_frequency"
-  | "trigger"
   | "info_source"
-  | "top_interest";
+  | "top_expectation"
+  | "improvement_request";
 
-export type Step = {
-  key: StepKey;
-  title: string;
-  description?: string;
-  options: Option[];
-  required?: boolean;
-};
+export type Step =
+  | {
+      key: StepKey;
+      kind: "choice";
+      title: string;
+      description?: string;
+      options: Option[];
+      required?: boolean;
+    }
+  | {
+      key: StepKey;
+      kind: "text";
+      title: string;
+      description?: string;
+      placeholder?: string;
+      required?: boolean;
+    };
 
 export type GroupKey =
   | "residence"
@@ -27,23 +37,21 @@ export type GroupKey =
   | "child_with"
   | "child_age_band"
   | "visit_frequency"
-  | "trigger"
-  | "info_source"
-  | "top_interest";
+  | "info_source";
 
-export const QUESTION_VERSION = "v2026-03-07";
+export const QUESTION_VERSION = "v2026-03-15";
 
 // ----------------------
 // 選択肢
 // ----------------------
-export const OPTIONS: Record<StepKey, Option[]> = {
+export const OPTIONS = {
   age_band: [
-    { value: "10代", label: "10代" },
+    { value: "10代以下", label: "10代以下" },
     { value: "20代", label: "20代" },
     { value: "30代", label: "30代" },
     { value: "40代", label: "40代" },
     { value: "50代", label: "50代" },
-    { value: "60代+", label: "60代以上" },
+    { value: "60代以上", label: "60代以上" },
   ],
 
   gender: [
@@ -93,17 +101,6 @@ export const OPTIONS: Record<StepKey, Option[]> = {
     { value: "年2回以上", label: "年2回以上" },
   ],
 
-  trigger: [
-    { value: "子どもが行きたいと言った", label: "子どもが行きたいと言った" },
-    { value: "以前から来てみたかった", label: "以前から来てみたかった" },
-    { value: "旅行の予定に入っていた", label: "旅行の予定に入っていた" },
-    { value: "学習・教育目的", label: "学習・教育目的" },
-    { value: "デート・レジャー", label: "デート・レジャー" },
-    { value: "イベント", label: "イベント" },
-    { value: "家族・友人に勧められた", label: "家族・友人に勧められた" },
-    { value: "特に理由はない", label: "特に理由はない" },
-  ],
-
   info_source: [
     { value: "SNS", label: "SNS" },
     { value: "YouTube", label: "YouTube" },
@@ -114,29 +111,29 @@ export const OPTIONS: Record<StepKey, Option[]> = {
     { value: "家族・友人", label: "家族・友人" },
     { value: "特にない", label: "特にない" },
   ],
-
-  top_interest: [
-    { value: "シャチ", label: "シャチ" },
-    { value: "イルカ", label: "イルカ" },
-    { value: "ベルーガ", label: "ベルーガ" },
-    { value: "黒潮大水槽", label: "黒潮大水槽" },
-    { value: "深海", label: "深海" },
-    { value: "サンゴ水槽", label: "サンゴ水槽" },
-    { value: "ウミガメ", label: "ウミガメ" },
-    { value: "ペンギン", label: "ペンギン" },
-    { value: "くらげ", label: "くらげ" },
-    { value: "特にない", label: "特にない" },
-  ],
-};
+} as const;
 
 // ----------------------
 // ステップ順
 // ----------------------
 export const BASE_STEPS: Step[] = [
-  { key: "age_band", title: "あなたの年代を教えてください。", options: OPTIONS.age_band, required: true },
-  { key: "gender", title: "性別を教えてください。", options: OPTIONS.gender, required: true },
+  {
+    key: "age_band",
+    kind: "choice",
+    title: "あなたの年代を教えてください。",
+    options: OPTIONS.age_band,
+    required: true,
+  },
+  {
+    key: "gender",
+    kind: "choice",
+    title: "性別を教えてください。",
+    options: OPTIONS.gender,
+    required: true,
+  },
   {
     key: "residence",
+    kind: "choice",
     title: "お住まいの地域を教えてください。",
     description: "分析の精度が上がります（個人特定には使いません）",
     options: OPTIONS.residence,
@@ -144,44 +141,53 @@ export const BASE_STEPS: Step[] = [
   },
   {
     key: "companion_type",
+    kind: "choice",
     title: "今回はどなたと来館しましたか？",
     options: OPTIONS.companion_type,
     required: true,
   },
   {
     key: "child_with",
+    kind: "choice",
     title: "今回のご来館では、保護者としてお子さま（18歳未満）を同伴していますか？",
     options: OPTIONS.child_with,
     required: true,
   },
   {
     key: "visit_frequency",
+    kind: "choice",
     title: "名古屋港水族館にはどのくらいの頻度で来館しますか？",
     options: OPTIONS.visit_frequency,
     required: true,
   },
   {
-    key: "trigger",
-    title: "今回、来館しようと思った一番の理由は何ですか？",
-    options: OPTIONS.trigger,
-    required: true,
-  },
-  {
     key: "info_source",
+    kind: "choice",
     title: "名古屋港水族館の情報をどこで知りましたか？",
     options: OPTIONS.info_source,
     required: true,
   },
   {
-    key: "top_interest",
-    title: "今回一番楽しみにしていた展示は何ですか？",
-    options: OPTIONS.top_interest,
+    key: "top_expectation",
+    kind: "text",
+    title: "今日一番楽しみにしていたものを教えてください。",
+    description: "例：シャチ、イルカパフォーマンス、ペンギン など",
+    placeholder: "例：シャチ、イルカパフォーマンス、ペンギン",
     required: true,
+  },
+  {
+    key: "improvement_request",
+    kind: "text",
+    title: "改善してほしいことがあれば教えてください。",
+    description: "例：混雑、席、食事、案内表示 など",
+    placeholder: "例：混雑、席、食事、案内表示",
+    required: false,
   },
 ];
 
 export const CHILD_AGE_STEP: Step = {
   key: "child_age_band",
+  kind: "choice",
   title: "同伴しているお子さまの年齢を教えてください。",
   description: "お子さま（18歳未満）を同伴している場合のみご回答ください。",
   options: OPTIONS.child_age_band,
@@ -197,26 +203,23 @@ export const GROUP_KEYS: GroupKey[] = [
   "child_with",
   "child_age_band",
   "visit_frequency",
-  "trigger",
   "info_source",
-  "top_interest",
 ];
 
 export const GROUP_TITLES: Record<GroupKey, string> = {
-  residence: "居住地（residence）",
-  companion_type: "同伴（companion_type）",
-  child_with: "子ども同伴（child_with）",
-  child_age_band: "子どもの年齢（child_age_band）",
-  visit_frequency: "来館頻度（visit_frequency）",
-  trigger: "きっかけ（trigger）",
-  info_source: "情報源（info_source）",
-  top_interest: "見たかった展示（top_interest）",
+  residence: "居住地",
+  companion_type: "同行者",
+  child_with: "子ども同伴",
+  child_age_band: "子どもの年齢",
+  visit_frequency: "来館頻度",
+  info_source: "情報を知ったきっかけ",
 };
 
 // ----------------------
 // APIバリデーション用
 // ----------------------
-const values = (k: StepKey) => OPTIONS[k].map((o) => o.value) as readonly string[];
+const values = <T extends keyof typeof OPTIONS>(k: T) =>
+  OPTIONS[k].map((o) => o.value) as readonly string[];
 
 export const ALLOWED = {
   age_band: values("age_band"),
@@ -226,7 +229,5 @@ export const ALLOWED = {
   child_with: values("child_with"),
   child_age_band: values("child_age_band"),
   visit_frequency: values("visit_frequency"),
-  trigger: values("trigger"),
   info_source: values("info_source"),
-  top_interest: values("top_interest"),
 } as const;

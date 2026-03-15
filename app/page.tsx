@@ -8,12 +8,12 @@ type FormState = {
   gender: string;
   residence: string;
   companion_type: string;
-  visit_frequency: string;
-  trigger: string;
-  info_source: string;
-  top_interest: string;
   child_with: string;
-  child_age_band?: string;
+  child_age_band: string;
+  visit_frequency: string;
+  info_source: string;
+  top_expectation: string;
+  improvement_request: string;
 };
 
 function getRespondentId() {
@@ -42,12 +42,12 @@ export default function Home() {
     gender: "",
     residence: "",
     companion_type: "",
-    visit_frequency: "",
-    trigger: "",
-    info_source: "",
-    top_interest: "",
     child_with: "",
     child_age_band: "",
+    visit_frequency: "",
+    info_source: "",
+    top_expectation: "",
+    improvement_request: "",
   });
 
   const [stepIndex, setStepIndex] = useState(0);
@@ -79,13 +79,18 @@ export default function Home() {
   }, [needsChildAgeStep]);
 
   const current = steps[stepIndex];
-  const currentValue = (form as any)[current.key] as string;
+  const currentValue = form[current.key] ?? "";
   const progress = Math.round(((stepIndex + 1) / steps.length) * 100);
 
   const canGoNext = useMemo(() => {
     if (!current.required) return true;
-    return !!currentValue;
-  }, [current.required, currentValue]);
+
+    if (current.kind === "choice") {
+      return !!currentValue;
+    }
+
+    return currentValue.trim().length > 0;
+  }, [current, currentValue]);
 
   function setAnswer(stepKey: StepKey, value: string) {
     setForm((prev) => {
@@ -141,15 +146,27 @@ export default function Home() {
     setIsError(false);
     setIsSubmitting(true);
 
-    const payload: any = {
-      ...form,
+    const url = new URL(window.location.href);
+    const sourceLocation = url.searchParams.get("src") ?? "qr";
+
+    const payload: Record<string, string> = {
       respondent_id: getRespondentId(),
       visit_key: getVisitKeyJST(),
-      child_with: form.child_with || "",
-      child_age_band: form.child_with === "はい" ? form.child_age_band || "" : "",
+      source_location: sourceLocation,
+      age_band: form.age_band,
+      gender: form.gender,
+      residence: form.residence,
+      companion_type: form.companion_type,
+      child_with: form.child_with,
+      visit_frequency: form.visit_frequency,
+      info_source: form.info_source,
+      top_expectation: form.top_expectation.trim(),
+      improvement_request: form.improvement_request.trim(),
     };
 
-    if (!needsChildAgeStep) delete payload.child_age_band;
+    if (form.child_with === "はい") {
+      payload.child_age_band = form.child_age_band;
+    }
 
     try {
       const res = await fetch("/api/submit", {
@@ -159,6 +176,7 @@ export default function Home() {
       });
 
       const data = await res.json().catch(() => ({}));
+
       if (!res.ok) {
         setIsError(true);
         setMsg(data.error ?? "送信に失敗しました");
@@ -215,7 +233,7 @@ export default function Home() {
                     rel="noreferrer"
                     className="inline-flex rounded-xl bg-slate-900 px-4 py-2 text-sm font-extrabold text-white hover:bg-slate-800"
                   >
-                    オリジナル壁紙をダウンロード
+                    オリジナル壁紙を開く
                   </a>
                 </div>
               </section>
@@ -267,6 +285,7 @@ export default function Home() {
               本日は回答済みです（誤入力があれば「回答を修正する」から上書きできます）
             </div>
           )}
+
           {editMode && (
             <div className="mt-3 rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-bold text-slate-700">
               修正モード：この送信は本日の回答を上書きします
@@ -278,33 +297,51 @@ export default function Home() {
           <div className="mb-4">
             <p className="text-sm font-bold text-slate-900">{current.title}</p>
             {current.description && (
-              <p className="mt-1 text-xs leading-relaxed text-slate-500">{current.description}</p>
+              <p className="mt-1 text-xs leading-relaxed text-slate-500">
+                {current.description}
+              </p>
             )}
           </div>
 
-          <div className="space-y-2">
-            {current.options.map((opt) => {
-              const checked = currentValue === opt.value;
-              return (
-                <button
-                  key={opt.value}
-                  type="button"
-                  onClick={() => setAnswer(current.key, opt.value)}
-                  className={[
-                    "w-full rounded-xl border px-4 py-3 text-left text-sm transition",
-                    checked
-                      ? "border-slate-900 bg-slate-900 text-white"
-                      : "border-slate-200 bg-white text-slate-900 hover:bg-slate-50",
-                  ].join(" ")}
-                >
-                  <div className="flex items-center justify-between gap-3">
-                    <span className="font-semibold">{opt.label}</span>
-                    {checked && <span className="text-xs font-extrabold">選択中</span>}
-                  </div>
-                </button>
-              );
-            })}
-          </div>
+          {current.kind === "choice" ? (
+            <div className="space-y-2">
+              {current.options.map((opt) => {
+                const checked = currentValue === opt.value;
+
+                return (
+                  <button
+                    key={opt.value}
+                    type="button"
+                    onClick={() => setAnswer(current.key, opt.value)}
+                    className={[
+                      "w-full rounded-xl border px-4 py-3 text-left text-sm transition",
+                      checked
+                        ? "border-slate-900 bg-slate-900 text-white"
+                        : "border-slate-200 bg-white text-slate-900 hover:bg-slate-50",
+                    ].join(" ")}
+                  >
+                    <div className="flex items-center justify-between gap-3">
+                      <span className="font-semibold">{opt.label}</span>
+                      {checked && <span className="text-xs font-extrabold">選択中</span>}
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+          ) : (
+            <div className="space-y-2">
+              <textarea
+                value={currentValue}
+                onChange={(e) => setAnswer(current.key, e.target.value)}
+                placeholder={current.placeholder ?? ""}
+                rows={5}
+                className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-slate-400"
+              />
+              <p className="text-xs text-slate-500">
+                短い言葉でも大丈夫です。
+              </p>
+            </div>
+          )}
 
           <div className="mt-6 flex items-center gap-3">
             <button
