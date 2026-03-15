@@ -111,7 +111,7 @@ export const OPTIONS = {
     { value: "家族・友人", label: "家族・友人" },
     { value: "特にない", label: "特にない" },
   ],
-} as const;
+} ;
 
 // ----------------------
 // ステップ順
