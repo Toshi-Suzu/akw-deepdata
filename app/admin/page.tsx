@@ -52,7 +52,7 @@ function liftLabel(x: number | null) {
   return `${(Math.round(x * 100) / 100).toFixed(2)}倍`;
 }
 
-function Kpi({ label, value }: { label: string; value: any }) {
+function Kpi({ label, value }: { label: string; value: React.ReactNode }) {
   return (
     <div className="rounded-2xl border border-slate-200 bg-white px-4 py-3 shadow-sm">
       <div className="text-xs font-bold text-slate-600">{label}</div>
@@ -62,10 +62,12 @@ function Kpi({ label, value }: { label: string; value: any }) {
 }
 
 function Block({
+  step,
   title,
   description,
   children,
 }: {
+  step?: string;
   title: string;
   description?: string;
   children: React.ReactNode;
@@ -73,11 +75,49 @@ function Block({
   return (
     <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
       <div>
-        <h2 className="text-sm font-extrabold text-slate-900">{title}</h2>
+        <div className="flex items-center gap-2">
+          {step && (
+            <span className="rounded-full bg-slate-900 px-2 py-0.5 text-[11px] font-extrabold text-white">
+              {step}
+            </span>
+          )}
+          <h2 className="text-sm font-extrabold text-slate-900">{title}</h2>
+        </div>
         {description && <p className="mt-1 text-xs text-slate-600">{description}</p>}
       </div>
       <div className="mt-4">{children}</div>
     </section>
+  );
+}
+
+function ResultSummaryCard({
+  title,
+  label,
+  diffPt,
+  segmentRatio,
+  baselineRatio,
+  count,
+}: {
+  title: string;
+  label: string;
+  diffPt: number;
+  segmentRatio: number;
+  baselineRatio: number;
+  count: number;
+}) {
+  return (
+    <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+      <div className="text-xs font-bold text-slate-500">{title}</div>
+      <div className="mt-2 text-base font-extrabold text-slate-900">{label}</div>
+      <div className="mt-2 text-lg font-extrabold text-slate-900">
+        {diffPt > 0 ? "+" : ""}
+        {diffPt.toFixed(1)}pt
+      </div>
+      <div className="mt-1 text-xs text-slate-600">
+        指定した属性 {segmentRatio.toFixed(1)}% / 全体 {baselineRatio.toFixed(1)}%
+      </div>
+      <div className="mt-1 text-xs text-slate-500">回答人数 {count}</div>
+    </div>
   );
 }
 
@@ -136,7 +176,9 @@ function DiffTable({
                 <td className="py-2 px-2 text-right font-extrabold text-slate-900">
                   {pt(r.diff)}
                 </td>
-                <td className="py-2 px-2 text-right text-slate-700">{liftLabel(r.lift)}</td>
+                <td className="py-2 px-2 text-right text-slate-700">
+                  {liftLabel(r.lift)}
+                </td>
                 <td className="py-2 pl-2 text-right text-slate-700">{r.segmentCount}</td>
               </tr>
             ))}
@@ -185,7 +227,6 @@ function DiffSummaryCard({
               <th className="text-right py-2 pl-2">回答人数</th>
             </tr>
           </thead>
-
           <tbody>
             {items.slice(0, 3).map((r) => (
               <tr key={`${r.groupKey}-${r.label}`} className="border-t border-slate-100">
@@ -556,13 +597,9 @@ export default function AdminCompare() {
       : ((periodRightPack?.segmentGroups?.[groupKey] ?? []) as StatItem[]);
 
   const leftTotal =
-    basis === "baseline"
-      ? (periodLeftPack?.baselineTotal ?? 0)
-      : (periodLeftPack?.segmentTotal ?? 0);
+    basis === "baseline" ? (periodLeftPack?.baselineTotal ?? 0) : (periodLeftPack?.segmentTotal ?? 0);
   const rightTotal =
-    basis === "baseline"
-      ? (periodRightPack?.baselineTotal ?? 0)
-      : (periodRightPack?.segmentTotal ?? 0);
+    basis === "baseline" ? (periodRightPack?.baselineTotal ?? 0) : (periodRightPack?.segmentTotal ?? 0);
 
   const periodRows = useMemo(() => {
     if (!periodLeftPack || !periodRightPack) return [];
@@ -581,7 +618,28 @@ export default function AdminCompare() {
     }));
   }, [segSummaryPack]);
 
-  const currentAttributeLabel = ageBand || gender ? `${ageBand || ""}${gender || ""}` : "指定なし（全体）";
+  const topInsights = useMemo(() => {
+    if (!segSummaryPack?.diffs) return [];
+
+    const all = GROUP_KEYS.flatMap((key) =>
+      ((segSummaryPack.diffs[key] ?? []) as ApiDiffItem[]).map((item) => ({
+        ...item,
+        groupTitle: GROUP_TITLES[key],
+      }))
+    );
+
+    return all
+      .sort((x, y) => Math.abs(y.diffPt) - Math.abs(x.diffPt))
+      .slice(0, 3);
+  }, [segSummaryPack]);
+
+  const currentAttributeLabel =
+    ageBand || gender ? `${ageBand || ""}${gender || ""}` : "指定なし（全体）";
+
+  const currentAnalysisLabel =
+    analysisMode === "seg"
+      ? `全体と比べて特徴を見る（${segPeriod === "A" ? "期間A" : "期間B"}）`
+      : `期間Aと期間Bを比較（${basis === "baseline" ? "全体" : "指定した属性"}）`;
 
   const segLeftLabel = "全体の回答割合";
   const segRightLabel = "指定した属性の回答割合";
@@ -604,7 +662,7 @@ export default function AdminCompare() {
               名古屋港水族館 来館アンケート 管理画面
             </h1>
             <p className="mt-1 text-sm text-slate-600">
-              対象を絞り、分析方法を選び、比較する項目ごとに結果を確認します
+              何を見たいかを選び、対象を絞って、比較結果を確認します
             </p>
           </div>
 
@@ -665,8 +723,73 @@ export default function AdminCompare() {
         )}
 
         <Block
-          title="① 対象を絞る"
-          description="どの期間・どの属性の回答を見るかを指定します"
+          step="1"
+          title="何を知りたいか"
+          description="どの項目について差を見るかを選びます"
+        >
+          <div className="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
+            <div className="flex flex-wrap items-center gap-2">
+              <label className="text-xs font-bold text-slate-700">比較する項目</label>
+              <select
+                value={groupKey}
+                onChange={(e) => setGroupKey(e.target.value as GroupKey)}
+                className="rounded-xl border border-slate-200 px-3 py-2 text-sm"
+              >
+                {GROUP_KEYS.map((k) => (
+                  <option key={k} value={k}>
+                    {GROUP_TITLES[k]}
+                  </option>
+                ))}
+              </select>
+            </div>
+          </div>
+        </Block>
+
+        <Block
+          step="2"
+          title="誰の回答を見るか"
+          description="比較したい来館者属性を指定します"
+        >
+          <div className="rounded-2xl border border-slate-100 bg-slate-50 p-4">
+            <div className="mt-1 text-[11px] text-slate-500">
+              ここで指定した人の回答を、全体と比べて表示します
+            </div>
+
+            <div className="mt-3 flex flex-wrap items-center gap-2">
+              <label className="text-xs font-bold text-slate-700">年代</label>
+              <select
+                value={ageBand}
+                onChange={(e) => setAgeBand(e.target.value)}
+                className="rounded-xl border border-slate-200 px-3 py-2 text-sm"
+              >
+                <option value="">指定しない（全体）</option>
+                <option>10代</option>
+                <option>20代</option>
+                <option>30代</option>
+                <option>40代</option>
+                <option>50代</option>
+                <option>60代+</option>
+              </select>
+
+              <label className="text-xs font-bold text-slate-700">性別</label>
+              <select
+                value={gender}
+                onChange={(e) => setGender(e.target.value)}
+                className="rounded-xl border border-slate-200 px-3 py-2 text-sm"
+              >
+                <option value="">指定しない（全体）</option>
+                <option>女性</option>
+                <option>男性</option>
+                <option>回答しない</option>
+              </select>
+            </div>
+          </div>
+        </Block>
+
+        <Block
+          step="3"
+          title="どの期間で見るか"
+          description="期間Aと期間Bを設定します"
         >
           <div className="space-y-5">
             <div className="flex flex-wrap items-center gap-3">
@@ -809,48 +932,13 @@ export default function AdminCompare() {
                 </div>
               </div>
             </div>
-
-            <div className="rounded-2xl border border-slate-100 bg-slate-50 p-4">
-              <div className="text-xs font-extrabold text-slate-700">来館者属性</div>
-              <p className="mt-1 text-[11px] text-slate-500">
-                ここで指定した人の回答を、全体と比べて表示します
-              </p>
-
-              <div className="mt-3 flex flex-wrap items-center gap-2">
-                <label className="text-xs font-bold text-slate-700">年代</label>
-                <select
-                  value={ageBand}
-                  onChange={(e) => setAgeBand(e.target.value)}
-                  className="rounded-xl border border-slate-200 px-3 py-2 text-sm"
-                >
-                  <option value="">指定しない（全体）</option>
-                  <option>10代</option>
-                  <option>20代</option>
-                  <option>30代</option>
-                  <option>40代</option>
-                  <option>50代</option>
-                  <option>60代+</option>
-                </select>
-
-                <label className="text-xs font-bold text-slate-700">性別</label>
-                <select
-                  value={gender}
-                  onChange={(e) => setGender(e.target.value)}
-                  className="rounded-xl border border-slate-200 px-3 py-2 text-sm"
-                >
-                  <option value="">指定しない（全体）</option>
-                  <option>女性</option>
-                  <option>男性</option>
-                  <option>回答しない</option>
-                </select>
-              </div>
-            </div>
           </div>
         </Block>
 
         <Block
-          title="② 分析方法を選ぶ"
-          description="何を知りたいかを選びます"
+          step="4"
+          title="どう比較するか"
+          description="全体との比較か、期間どうしの比較かを選びます"
         >
           <div className="space-y-4">
             <div className="flex flex-wrap items-center gap-2">
@@ -934,6 +1022,16 @@ export default function AdminCompare() {
               </div>
             )}
 
+            <div className="flex justify-end">
+              <button
+                className="rounded-xl bg-slate-900 px-4 py-2 text-sm font-extrabold text-white hover:bg-slate-800"
+                onClick={load}
+                disabled={loading}
+              >
+                {loading ? "集計中…" : "この条件で再集計"}
+              </button>
+            </div>
+
             <p className="text-xs text-slate-600">
               「期間Aと期間Bを比較」は、差（pt）が <span className="font-bold">期間A − 期間B</span>
               になるよう表示しています。プラスなら期間Aの方が高く、マイナスなら期間Bの方が高いです。
@@ -941,40 +1039,20 @@ export default function AdminCompare() {
           </div>
         </Block>
 
-        <Block
-          title="③ 比較する項目を選ぶ"
-          description="どの切り口で差を見るかを選びます"
-        >
-          <div className="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
-            <div className="flex flex-wrap items-center gap-2">
-              <label className="text-xs font-bold text-slate-700">比較する項目</label>
-              <select
-                value={groupKey}
-                onChange={(e) => setGroupKey(e.target.value as GroupKey)}
-                className="rounded-xl border border-slate-200 px-3 py-2 text-sm"
-              >
-                {GROUP_KEYS.map((k) => (
-                  <option key={k} value={k}>
-                    {GROUP_TITLES[k]}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            <button
-              className="rounded-xl bg-slate-900 px-4 py-2 text-sm font-extrabold text-white hover:bg-slate-800"
-              onClick={load}
-              disabled={loading}
-            >
-              {loading ? "集計中…" : "この条件で再集計"}
-            </button>
-          </div>
-        </Block>
-
         <section className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
           <div className="text-sm font-extrabold text-slate-900">現在の条件</div>
 
-          <div className="mt-3 grid gap-2 md:grid-cols-2 xl:grid-cols-4 text-sm text-slate-700">
+          <div className="mt-3 grid gap-2 md:grid-cols-2 xl:grid-cols-5 text-sm text-slate-700">
+            <div>
+              <span className="font-bold text-slate-900">比較する項目：</span>
+              {GROUP_TITLES[groupKey]}
+            </div>
+
+            <div>
+              <span className="font-bold text-slate-900">来館者属性：</span>
+              {currentAttributeLabel}
+            </div>
+
             <div>
               <span className="font-bold text-slate-900">期間A：</span>
               {fromA || "未指定"}〜{toA || "未指定"}
@@ -986,16 +1064,57 @@ export default function AdminCompare() {
             </div>
 
             <div>
-              <span className="font-bold text-slate-900">来館者属性：</span>
-              {currentAttributeLabel}
-            </div>
-
-            <div>
-              <span className="font-bold text-slate-900">比較する項目：</span>
-              {GROUP_TITLES[groupKey]}
+              <span className="font-bold text-slate-900">比較方法：</span>
+              {currentAnalysisLabel}
             </div>
           </div>
         </section>
+
+        {analysisMode === "seg" && (
+          <section className="space-y-4">
+            <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+              <div className="flex flex-col gap-4">
+                <div>
+                  <div className="text-sm font-extrabold text-slate-900">結果サマリー</div>
+                  <div className="mt-1 text-xs text-slate-600">
+                    {segPeriod === "A" ? "期間A" : "期間B"} の{" "}
+                    {ageBand || gender ? `「${ageBand || ""}${gender || ""}」` : "全体"}について、
+                    全体と比べて差が大きい項目です
+                  </div>
+                </div>
+
+                <div className="grid gap-3 md:grid-cols-3">
+                  {topInsights.length > 0 ? (
+                    topInsights.map((item, idx) => (
+                      <ResultSummaryCard
+                        key={`${item.groupKey}-${item.label}-${idx}`}
+                        title={`特徴 ${idx + 1} / ${item.groupTitle}`}
+                        label={item.label}
+                        diffPt={item.diffPt}
+                        segmentRatio={item.segmentRatio}
+                        baselineRatio={item.baselineRatio}
+                        count={item.segmentCount}
+                      />
+                    ))
+                  ) : (
+                    <div className="rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-500 md:col-span-3">
+                      サマリーを表示できるデータがありません
+                    </div>
+                  )}
+                </div>
+
+                <div className="flex flex-wrap items-center gap-4 text-xs text-slate-600">
+                  <div>回答人数：{segSummaryPack?.segmentTotal ?? 0}</div>
+                  {(segSummaryPack?.segmentTotal ?? 0) < 10 && (
+                    <div className="rounded-lg bg-amber-100 px-2 py-1 font-bold text-amber-800">
+                      回答人数が少ないため参考値です
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          </section>
+        )}
 
         {analysisMode === "seg" ? (
           <div className="space-y-6">
@@ -1039,30 +1158,6 @@ export default function AdminCompare() {
                 この差分をCSV出力
               </button>
             </div>
-
-            <section className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
-              <div className="flex flex-col gap-4">
-                <div className="text-sm font-extrabold text-slate-900">
-                  全体と比べて特徴が大きい項目
-                </div>
-
-                <div className="text-xs text-slate-600">
-                  {ageBand || gender
-                    ? `${segPeriod === "A" ? "期間A" : "期間B"}の「${ageBand || ""}${gender || ""}」を全体と比較しています`
-                    : `${segPeriod === "A" ? "期間A" : "期間B"}の回答を表示しています（属性指定なし）`}
-                </div>
-
-                <div className="text-xs text-slate-600">
-                  回答人数：{segSummaryPack?.segmentTotal ?? 0}
-                </div>
-
-                {(segSummaryPack?.segmentTotal ?? 0) < 10 && (
-                  <div className="rounded-lg bg-amber-100 px-2 py-1 text-xs font-bold text-amber-800">
-                    回答人数が少ないため参考値です
-                  </div>
-                )}
-              </div>
-            </section>
 
             <details className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
               <summary className="cursor-pointer text-sm font-extrabold text-slate-900">
