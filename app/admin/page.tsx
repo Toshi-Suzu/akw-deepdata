@@ -659,7 +659,7 @@ async function uploadWallpaper() {
             </button>
 
 <div className="rounded-xl bg-slate-50 p-3 flex flex-col gap-1">
-  <div className="text-xs font-extrabold text-slate-700">比較する属性</div>
+  <div className="text-xs font-extrabold text-slate-700">比較する来館者の属性</div>
   <p className="text-[11px] text-slate-500">
     ここで指定した人の回答を、全体と比べて表示します
   </p>
@@ -824,7 +824,7 @@ async function uploadWallpaper() {
         <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
           <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
             <div className="flex flex-wrap items-center gap-2">
-              <div className="text-xs font-extrabold text-slate-700">表示方法</div>
+              <div className="text-xs font-extrabold text-slate-700">分析方法</div>
 
               <button
                 className={`rounded-xl px-3 py-1.5 text-sm font-bold border ${
@@ -900,7 +900,7 @@ async function uploadWallpaper() {
             </div>
 
             <div className="flex flex-wrap items-center gap-2">
-              <label className="text-xs font-bold text-slate-700">比較する項目</label>
+              <label className="text-xs font-bold text-slate-700">分析する項目</label>
               <select
                 value={groupKey}
                 onChange={(e) => setGroupKey(e.target.value as GroupKey)}
